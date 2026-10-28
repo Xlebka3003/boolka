@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,6 +13,7 @@ public partial class MainWindow : Window
 {
     private readonly IGameProvider provider = new EsoProvider();
     private readonly SettingsStore settings;
+    private readonly ArchiveDependencyCache dependencyCache;
     private readonly ArchiveDownloader downloader = new();
     private readonly AddonDetailsService detailsService = new();
     private CancellationTokenSource? detailsOperation;
@@ -44,6 +45,7 @@ public partial class MainWindow : Window
     {
         this.settings = settings;
         preferencesStore = new PreferencesStore(settings.PreferencesPath);
+        dependencyCache = new ArchiveDependencyCache(Path.ChangeExtension(settings.PreferencesPath, "dependencies.json"));
         preferences = preferencesStore.Load();
         UiResources.Apply(preferences.Language);
         ThemeManager.Apply(preferences.Theme);
@@ -85,7 +87,8 @@ public partial class MainWindow : Window
             if (await LoadFolderAsync(saved.Folder, false))
             {
                 await FetchCatalogAsync(true, false);
-                if (saved.Warning is not null) StatusLabel.Text += " · " + UiText.Get(saved.Warning);
+                if (saved.Warning is not null) StatusLabel.Text += " · " + UiError.Detail(saved.Warning);
+                await TryStartupAddonUpdateAsync();
                 ShowPreviousCrashNotice();
                 return;
             }
@@ -99,6 +102,7 @@ public partial class MainWindow : Window
             if (await LoadFolderAsync(dialog.SelectedFolder, true)) await FetchCatalogAsync(true, false);
         }
         else StatusLabel.Text = UiText.Get("Папка не выбрана · Её можно указать кнопкой «Выбрать папку»");
+        await TryStartupAddonUpdateAsync();
         ShowPreviousCrashNotice();
     }
 
@@ -110,7 +114,7 @@ public partial class MainWindow : Window
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or IOException or UnauthorizedAccessException)
         {
             AppLog.Error("ui.operation.failed", ex);
-            StatusLabel.Text = ex.Message;
+            StatusLabel.Text = UiError.Describe(ex);
         }
     }
 
@@ -155,7 +159,7 @@ public partial class MainWindow : Window
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
         {
             AppLog.Error("ui.operation.failed", ex);
-            StatusLabel.Text = UiText.Get("Не удалось прочитать папку: ") + ex.Message; return false;
+            StatusLabel.Text = UiText.Get("Не удалось прочитать папку: ") + UiError.Describe(ex); return false;
         }
         finally { SetBusy(false); }
     }
@@ -167,7 +171,7 @@ public partial class MainWindow : Window
         var unresolvedFolders = results.Where(x => x.CatalogAddon is null)
             .Select(x => Path.GetFileName(x.Addon.Path.TrimEnd('\\', '/'))).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var updates = results.Where(x => x.Status == UpdateStatus.UpdateAvailable && x.CatalogAddon?.CatalogId is > 0).Select(x => x.CatalogAddon!.CatalogId!.Value).ToHashSet();
-        var health = results.Select(x => DependencyHealth.Evaluate(x.Addon, installed)).ToList();
+        var health = results.Select(x => DependencyHealth.Evaluate(x.Addon with { Comparison = x }, installed)).ToList();
         var catalogHealth = results.Select((x, i) => (CatalogId: x.CatalogAddon?.CatalogId, Health: health[i])).Where(x => x.CatalogId.HasValue)
             .GroupBy(x => x.CatalogId!.Value).ToDictionary(x => x.Key, x => new DependencyHealthReport(
                 x.SelectMany(y => y.Health.Missing).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
@@ -200,9 +204,9 @@ public partial class MainWindow : Window
         {
             var actual = installed.Where(x => x.Comparison?.CatalogAddon?.CatalogId == root.CatalogId).ToList();
             if (actual.Count == 0) return null;
-            root = root with { PackageModules = actual.Select(x => new CatalogModule(System.IO.Path.GetFileName(x.Path.TrimEnd('\\', '/')), x.BuildVersion, x.RequiredDependencies)).ToList(), DependencyMetadataValid = actual.All(x => x.LocalMetadataComplete) };
+            root = root with { PackageModules = actual.Select(x => new CatalogModule(System.IO.Path.GetFileName(x.Path.TrimEnd('\\', '/')), x.BuildVersion, AddonRequirements.For(x))).ToList(), DependencyMetadataValid = actual.All(x => x.LocalMetadataComplete) };
         }
-        return DependencyResolver.Build(root, catalog, installed, includeRoot: !librariesOnly);
+        return ArchiveDependencyPlanner.Build(root, catalog, installed, includeRoot: !librariesOnly);
     }
 
     private string InstalledStatus() => catalogLoadedAt.HasValue
@@ -270,22 +274,52 @@ public partial class MainWindow : Window
 
     private static string DetailsKey(Addon addon) => addon.PreviewId is > 0 ? "id:" + addon.PreviewId : "path:" + addon.Path;
     private static string ReadableDependencies(string text) => System.Text.RegularExpressions.Regex.Replace(text,
-        @"([^\s:()]+)>=([0-9]{1,128})", "$1 — сборка $2 или новее", System.Text.RegularExpressions.RegexOptions.CultureInvariant | System.Text.RegularExpressions.RegexOptions.NonBacktracking);
+        @"([^\s:()]+)>=([0-9]{1,128})", match => UiText.Format($"{match.Groups[1].Value} — сборка {match.Groups[2].Value} или новее"),
+        System.Text.RegularExpressions.RegexOptions.CultureInvariant | System.Text.RegularExpressions.RegexOptions.NonBacktracking);
 
     private ListBoxItem? FindClickedAddonRow(DependencyObject? source)
     {
         while (source is not null && source != AddonList)
         {
-            if (source is ButtonBase or ScrollBar or Thumb) return null;
+            if (source is ButtonBase { IsEnabled: true } or ScrollBar or Thumb) return null;
             if (source is ListBoxItem item) return ItemsControl.ItemsControlFromItemContainer(item) == AddonList ? item : null;
             source = source is ContentElement content ? ContentOperations.GetParent(content) ?? (content as FrameworkContentElement)?.Parent
-                : source is Visual ? VisualTreeHelper.GetParent(source) : LogicalTreeHelper.GetParent(source);
+                : source is Visual ? VisualTreeHelper.GetParent(source) ?? LogicalTreeHelper.GetParent(source) : LogicalTreeHelper.GetParent(source);
         }
         return null;
     }
 
+    private void ClearSelectionOnBackground(object sender, MouseButtonEventArgs e)
+    {
+        if (!busy && !catalogMode && DetailPage.Visibility != Visibility.Visible
+            && IsCollectionBackground(e.OriginalSource as DependencyObject))
+        {
+            AddonList.Focus();
+            AddonList.UnselectAll();
+        }
+    }
+
+    private bool IsCollectionBackground(DependencyObject? source) => IsCollectionInputContext(source, allowSelectionControls: false);
+
+    private bool IsCollectionInputContext(DependencyObject? source, bool allowSelectionControls)
+    {
+        while (source is not null && source != this)
+        {
+            // Ввод текста и раскрытые меню сохраняют собственные сочетания клавиш.
+            if (source is TextBoxBase or PasswordBox or ComboBox or ComboBoxItem
+                or ScrollBar or Thumb or MenuItem or System.Windows.Controls.ContextMenu) return false;
+            if (!allowSelectionControls && (source is ButtonBase or ListBoxItem)) return false;
+            source = source is ContentElement content ? ContentOperations.GetParent(content) ?? (content as FrameworkContentElement)?.Parent
+                : source is Visual ? VisualTreeHelper.GetParent(source) ?? LogicalTreeHelper.GetParent(source) : LogicalTreeHelper.GetParent(source);
+        }
+        return source == this;
+    }
+
+    private bool selectingAddonRange;
+
     private void AddonPointerDown(object sender, MouseButtonEventArgs e)
     {
+        selectingAddonRange = !catalogMode && (Keyboard.Modifiers & (ModifierKeys.Control | ModifierKeys.Shift)) != 0;
         pressedAddonRow = busy ? null : FindClickedAddonRow(e.OriginalSource as DependencyObject);
         pressedAddonPoint = e.GetPosition(AddonList);
     }
@@ -294,6 +328,10 @@ public partial class MainWindow : Window
     {
         var pressed = pressedAddonRow;
         pressedAddonRow = null;
+        var selectionGesture = selectingAddonRange || !catalogMode && (Keyboard.Modifiers & (ModifierKeys.Control | ModifierKeys.Shift)) != 0;
+        selectingAddonRange = false;
+        // Ctrl/Shift обрабатывает сам ListBox: открытие страницы сбросило бы множественный выбор.
+        if (selectionGesture) return;
         if (busy || pressed is null || FindClickedAddonRow(e.OriginalSource as DependencyObject) != pressed
             || pressed.DataContext is not Addon addon) return;
         var point = e.GetPosition(AddonList);
@@ -304,11 +342,39 @@ public partial class MainWindow : Window
         _ = OpenDetailsAsync(addon);
     }
 
-    private void AddonListKeyDown(object sender, KeyEventArgs e)
+    private async void AddonListKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key != Key.Enter || busy || AddonList.SelectedItem is not Addon addon) return;
+        if (e.Key == Key.Delete && !catalogMode && !busy && AddonList.SelectedItems.Count > 0)
+        {
+            e.Handled = true;
+            await RemoveAddonsAsync(AddonList.SelectedItems.OfType<Addon>().ToArray());
+            return;
+        }
+        if (SelectAllAddonsShortcut(e.Key, Keyboard.Modifiers))
+        {
+            e.Handled = true;
+            return;
+        }
+        if (e.Key != Key.Enter || busy || AddonList.SelectedItems.Count != 1 || AddonList.SelectedItem is not Addon addon) return;
         e.Handled = true;
         _ = OpenDetailsAsync(addon);
+    }
+
+    private bool SelectAllAddonsShortcut(Key key, ModifierKeys modifiers)
+    {
+        if (catalogMode || busy || key != Key.A || (modifiers & ModifierKeys.Control) == 0) return false;
+        // После запуска фокус может быть на окне или кнопке. Следующая Delete
+        // должна попасть в обработчик списка без предварительного щелчка мышью.
+        AddonList.Focus();
+        AddonList.SelectAll();
+        return true;
+    }
+
+    private bool SelectAllFromWindow(Key key, ModifierKeys modifiers, DependencyObject? source)
+    {
+        if (DetailPage.Visibility == Visibility.Visible || GalleryOverlay.Visibility == Visibility.Visible
+            || !IsCollectionInputContext(source, allowSelectionControls: true)) return false;
+        return SelectAllAddonsShortcut(key, modifiers);
     }
 
     private async Task OpenDetailsAsync(Addon addon)
@@ -458,6 +524,11 @@ public partial class MainWindow : Window
     }
     private void WindowKeyDown(object sender, KeyEventArgs e)
     {
+        if (SelectAllFromWindow(e.Key, Keyboard.Modifiers, e.OriginalSource as DependencyObject))
+        {
+            e.Handled = true;
+            return;
+        }
         if (e.Key == Key.Escape && SearchBox.IsKeyboardFocusWithin)
         {
             SortDirectionButton.Focus();
@@ -545,6 +616,8 @@ public partial class MainWindow : Window
     {
         UpdateCategoryOptions();
         var previous = AddonList.SelectedItem as Addon;
+        var selectedPaths = AddonList.SelectedItems.OfType<Addon>().Where(item => item.Path.Length > 0)
+            .Select(item => item.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var query = SearchBox.Text.Trim();
         var source = catalogMode ? catalog : installed;
         var filter = catalogMode ? StatusFilter.All : (StatusFilter)Math.Max(0, StatusFilterBox.SelectedIndex);
@@ -558,6 +631,7 @@ public partial class MainWindow : Window
         var reverse = sort == AddonSort.Name ? descending : !descending;
         var filtered = AddonQuery.Apply(categorySource, query, sort, filter, presence, reverse);
         UpdateSortDirection();
+        AddonList.SelectionMode = catalogMode ? SelectionMode.Single : SelectionMode.Extended;
         AddonList.ItemsSource = filtered;
         StatusFilterBox.Visibility = catalogMode ? Visibility.Collapsed : Visibility.Visible;
         CatalogPresenceFilterBox.Visibility = catalogMode ? Visibility.Visible : Visibility.Collapsed;
@@ -574,6 +648,15 @@ public partial class MainWindow : Window
         CatalogButton.Background = catalogMode ? ThemeManager.Brush("#353044") : Brushes.Transparent;
         if (filtered.Count > 0) AddonList.SelectedItem = filtered.FirstOrDefault(x => catalogMode ? x.CatalogId == previous?.CatalogId : x.Path == previous?.Path) ?? filtered[0];
         else if (DetailPage.Visibility == Visibility.Visible) ReturnToList();
+        if (!catalogMode && selectedPaths.Count > 1)
+        {
+            var retained = filtered.Where(item => selectedPaths.Contains(item.Path)).ToArray();
+            if (retained.Length > 0)
+            {
+                AddonList.SelectedItems.Clear();
+                foreach (var item in retained) AddonList.SelectedItems.Add(item);
+            }
+        }
     }
 
     private void AddonSelected(object sender, SelectionChangedEventArgs e)
@@ -585,10 +668,48 @@ public partial class MainWindow : Window
         DetailAuthor.Text = addon?.Author ?? "";
         DetailDescription.Text = CompactDescription(addon is not null && displayedDetailsKey == DetailsKey(addon) && loadedDescription is not null ? loadedDescription : addon?.Description ?? UiText.Get("Выберите аддон в списке, чтобы посмотреть сведения о нём."));
         DetailInstallButton.IsEnabled = !busy && addon?.CanInstall == true;
-        DetailDependencies.Text = ReadableDependencies(addon?.Dependencies ?? "—");
-        DetailDependencyHealth.Text = ReadableDependencies(addon?.DependencyHealth?.Details ?? (addon?.IsInstalled == true ? UiText.Get("Не удалось проверить библиотеки. Перечитайте папку аддонов.") : UiText.Get("Проверка установленных библиотек появится после установки.")));
+        DetailDependencies.Children.Clear();
+        var checkedModules = dependencyCache.Find(addon?.DisplayCatalog);
+        DetailDependencySource.Text = addon is null ? "" : UiText.Get(DependencyPresenter.Source(addon, installed, checkedModules));
+        var dependencyRows = addon is null ? [] : DependencyPresenter.Build(addon, installed, checkedModules);
+        if (dependencyRows.Count == 0)
+            DetailDependencies.Children.Add(new TextBlock { Text = UiText.Get(addon?.IsInstalled == true || checkedModules is not null ? "Обязательные зависимости не указаны." : "Зависимости будут проверены при установке"), TextWrapping = TextWrapping.Wrap, FontSize = 14 });
+        foreach (var row in dependencyRows)
+        {
+            if (DetailDependencies.Children.Count > 0)
+            {
+                var separator = new Border { Height = 1, Margin = new Thickness(0, 8, 0, 8) };
+                separator.SetResourceReference(Border.BackgroundProperty, "Theme.353044");
+                DetailDependencies.Children.Add(separator);
+            }
+            var line = new Grid();
+            line.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            line.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            var requirement = new TextBox
+            {
+                Style = (Style)FindResource("SelectableDetailText"),
+                Text = ReadableDependencies(row.Requirement), TextWrapping = TextWrapping.Wrap,
+                FontSize = 14, Margin = new Thickness(0, 0, 16, 0), VerticalAlignment = VerticalAlignment.Center
+            };
+            line.Children.Add(requirement);
+            var state = new TextBox
+            {
+                Style = (Style)FindResource("SelectableDetailText"),
+                Text = UiText.Get(row.Status), TextWrapping = TextWrapping.NoWrap, TextAlignment = TextAlignment.Right,
+                Foreground = ThemeManager.Brush(row.NeedsAttention ? "#F1BDA9" : "#9AA3B5"),
+                FontSize = 12, VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(state, 1);
+            line.Children.Add(state);
+            DetailDependencies.Children.Add(line);
+        }
+        DetailDependencyHealth.Text = ReadableDependencies(addon?.DependencyHealth?.Details ?? (addon?.IsInstalled == true ? UiText.Get("Не удалось проверить библиотеки. Перечитайте папку аддонов.") : ""));
         if (addon?.UnconfirmedInstallation == true)
             DetailDependencyHealth.Text = UiText.Get("Папка аддона уже существует, но её проект не определён однозначно. Повторная установка заблокирована; проверьте установленный аддон.");
+        if (addon?.UnconfirmedInstallation != true && addon?.DependencyHealth is { HasProblems: false, Unknown.Count: 0 })
+            DetailDependencyHealth.Text = "";
+        DetailDependencyHealth.Visibility = string.IsNullOrWhiteSpace(DetailDependencyHealth.Text)
+            ? Visibility.Collapsed : Visibility.Visible;
         DetailDependencyHealth.Foreground = ThemeManager.Brush(addon?.DependencyStatusColor ?? "#9AA3B5");
         DetailDownloads.Text = addon?.DownloadsText ?? "—";
         DetailUpdated.Text = addon?.UpdatedText ?? "—";
@@ -600,9 +721,13 @@ public partial class MainWindow : Window
         selectedDependencyPlan = addon is null ? null : BuildDependencyPlan(addon, addon.IsInstalled);
         DetailDependencyPlan.Text = selectedDependencyPlan is null ? UiText.Get("Нужен каталог и подтверждённое сопоставление проекта.")
             : addon?.DependencyHealth is { Unknown.Count: > 0 } ? UiText.Get("Автоматическое исправление недоступно: часть зависимостей не удалось проверить.")
-            : !selectedDependencyPlan.IsReady ? UiText.Get("Автозагрузка невозможна:\n") + string.Join("\n", selectedDependencyPlan.Issues.Take(8))
-            : addon!.IsInstalled ? selectedDependencyPlan.Packages.Count == 0 ? UiText.Get("Обязательные зависимости уже найдены.") : UiText.Get("Недостающие библиотеки:\n") + string.Join("\n", selectedDependencyPlan.Packages.Select(x => x.Name))
-            : UiText.Get("При скачивании будут добавлены обязательные библиотеки: ") + (selectedDependencyPlan.Packages.Count - 1);
+            : !selectedDependencyPlan.IsReady ? UiText.Get("Автозагрузка невозможна:\n") + string.Join("\n", selectedDependencyPlan.Issues.Take(8).Select(UiError.Detail))
+            : addon!.IsInstalled ? ""
+            : "";
+        DetailDependencyPlan.Visibility = string.IsNullOrWhiteSpace(DetailDependencyPlan.Text) ? Visibility.Collapsed : Visibility.Visible;
+        DetailOpenFolderButton.Visibility = catalogMode ? Visibility.Visible : Visibility.Collapsed;
+        DetailOpenFolderButton.Content = UiText.Get("Открыть папку");
+        DetailOpenFolderButton.IsEnabled = !busy && SelectedAddonFolder(addon) is not null;
         LibrariesButton.Visibility = addon?.IsInstalled == true && addon.HasDependencyProblems && selectedDependencyPlan is not null ? Visibility.Visible : Visibility.Collapsed;
         LibrariesButton.IsEnabled = !busy && CanRepairLibraries();
         LibrariesButton.Background = CanRepairLibraries() ? ThemeManager.Brush("#FFB86C") : Brushes.Transparent;
@@ -610,6 +735,22 @@ public partial class MainWindow : Window
         DownloadZipButton.IsEnabled = !busy && CanDownloadSelectedZip();
         OpenButton.Content = catalogMode ? "ESOUI ↗" : UiText.Get("Открыть папку");
         OpenButton.IsEnabled = addon is not null && (catalogMode ? addon.WebUrl is not null : Directory.Exists(addon.Path));
+    }
+
+    private string? SelectedAddonFolder(Addon? addon)
+    {
+        var local = addon?.CatalogId is long id
+            ? installed.FirstOrDefault(item => item.Comparison?.CatalogAddon?.CatalogId == id) : addon;
+        return local is { IsInstalled: true } && Directory.Exists(local.Path) ? local.Path : null;
+    }
+
+    private void OpenDetailFolder(object sender, RoutedEventArgs e)
+    {
+        var folder = SelectedAddonFolder(AddonList.SelectedItem as Addon);
+        if (folder is null) return;
+        try { Process.Start(new ProcessStartInfo("explorer.exe") { ArgumentList = { folder }, UseShellExecute = false }); }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
+        { StatusLabel.Text = UiText.Get("Не удалось открыть: ") + UiError.Describe(ex); }
     }
 
     private void OpenSelected(object sender, RoutedEventArgs e)
@@ -620,14 +761,14 @@ public partial class MainWindow : Window
             if (catalogMode && addon.WebUrl is not null) Process.Start(new ProcessStartInfo(addon.WebUrl) { UseShellExecute = true });
             else if (!catalogMode && Directory.Exists(addon.Path)) Process.Start(new ProcessStartInfo("explorer.exe") { ArgumentList = { addon.Path }, UseShellExecute = false });
         }
-        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { StatusLabel.Text = UiText.Get("Не удалось открыть: ") + ex.Message; }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { StatusLabel.Text = UiText.Get("Не удалось открыть: ") + UiError.Describe(ex); }
     }
 
     private void OpenMatchedPage(object sender, RoutedEventArgs e)
     {
         if (AddonList.SelectedItem is not Addon { Comparison.CatalogAddon.WebUrl: { } url }) return;
         try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
-        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { StatusLabel.Text = UiText.Get("Не удалось открыть страницу: ") + ex.Message; }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { StatusLabel.Text = UiText.Get("Не удалось открыть страницу: ") + UiError.Describe(ex); }
     }
 
 
@@ -653,7 +794,7 @@ public partial class MainWindow : Window
     {
         if (lastBackupDirectory is null) return;
         try { Process.Start(new ProcessStartInfo("explorer.exe") { ArgumentList = { lastBackupDirectory }, UseShellExecute = false }); }
-        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { StatusLabel.Text = UiText.Get("Не удалось открыть резервную копию: ") + ex.Message; }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { StatusLabel.Text = UiText.Get("Не удалось открыть резервную копию: ") + UiError.Describe(ex); }
     }
 
     private async Task ExecuteInstallationAsync(Addon? chosen, bool librariesOnly, bool reinstall = false, bool batch = false, PackImportApproval? packImport = null)
@@ -668,11 +809,12 @@ public partial class MainWindow : Window
         using var operation = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
         activeDownload = operation;
         var directory = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Boolka-install-download-" + Guid.NewGuid().ToString("N"));
-        var archives = new Dictionary<long, string>();
+        var archives = packImport?.Archives is { } preparedArchives ? new Dictionary<long, string>(preparedArchives) : new Dictionary<long, string>();
         SetBusy(true, UiText.Get("Проверяем установленные аддоны и свежий каталог…"));
         BeginOperation();
         try
         {
+            Directory.CreateDirectory(directory);
             installed = (await provider.ScanAsync(target)).Addons;
             catalog = await provider.GetCatalogAsync(operation.Token);
             catalogLoadedAt = DateTimeOffset.Now;
@@ -682,10 +824,17 @@ public partial class MainWindow : Window
             if (packImport is not null)
             {
                 var packPlan = PackPlanner.Build(packImport.Pack, catalog, installed, (preferences.IgnoredIds ?? []).ToHashSet());
-                if (!target.Equals(packImport.TargetFolder, StringComparison.OrdinalIgnoreCase) || packPlan.Fingerprint != packImport.Fingerprint)
+                if (!target.Equals(packImport.TargetFolder, StringComparison.OrdinalIgnoreCase) || packPlan.Fingerprint != (packImport.CatalogFingerprint ?? packImport.Fingerprint))
                     throw new InvalidDataException(UiText.Get("Состав или версии изменились. Нажмите «Повторить» и проверьте набор заново."));
-                plan = packPlan.Plan;
-                skipped = packPlan.Skipped;
+                var prepared = await PackArchivePlanner.PrepareAsync(packImport.Pack, catalog, installed,
+                    (preferences.IgnoredIds ?? []).ToHashSet(), archives,
+                    package => DownloadPackArchiveAsync(package, directory, operation.Token), operation.Token);
+                if (prepared.Plan.Fingerprint != packImport.Fingerprint)
+                    throw new InvalidDataException(UiText.Get("Состав или версии изменились. Нажмите «Повторить» и проверьте набор заново."));
+                catalog = prepared.Catalog;
+                ApplyComparisons();
+                plan = prepared.Plan.Plan;
+                skipped = prepared.Plan.Skipped;
                 if (plan is null) { StatusLabel.Text = UiText.Get("Недостающих пакетов для установки нет."); return; }
             }
             else if (batch)
@@ -716,22 +865,7 @@ public partial class MainWindow : Window
                 await InstallBatchIndividuallyAsync(plan, skipped, librariesOnly, target, directory, archives, operation, packImport);
                 return;
             }
-            for (var index = 0; index < plan.Packages.Count; index++)
-            {
-                operation.Token.ThrowIfCancellationRequested();
-                var package = plan.Packages[index];
-                var packageId = package.CatalogId!.Value;
-                var path = System.IO.Path.Combine(directory, packageId + ".zip");
-                archives.Add(packageId, path);
-                var number = index + 1;
-                DownloadProgressChanged(number, plan.Packages.Count, package.Name, 0, null);
-                var progress = new Progress<DownloadProgress>(p =>
-                {
-                    if (activeDownload == operation && !operation.IsCancellationRequested && !installCommitting && number == index + 1)
-                        DownloadProgressChanged(number, plan.Packages.Count, package.Name, p.Bytes, p.Total);
-                });
-                await downloader.DownloadAsync(packageId, path, progress, operation.Token);
-            }
+            plan = await PrepareArchivesAsync(plan, directory, archives, operation, discoverDependencies: packImport is null);
             operation.Token.ThrowIfCancellationRequested();
             OperationProgress.IsIndeterminate = true;
             // Нажатие установки, обновления или переустановки сразу запускает операцию.
@@ -740,6 +874,7 @@ public partial class MainWindow : Window
             StatusLabel.Text = UiText.Get("Проверяем и устанавливаем архивы. Дождитесь завершения…");
             var updatedCount = plan.Packages.Count(x => x.IsInstalled);
             var installedCount = plan.Packages.Count - updatedCount;
+            EnsureStartupUpdateGameClosed();
             var result = await new SafeInstaller().InstallAsync(plan, archives, target, operation.Token);
             lastBackupDirectory = result.BackupDirectory;
             OpenBackupButton.Visibility = Visibility.Visible;
@@ -812,7 +947,7 @@ public partial class MainWindow : Window
                 if (activeDownload != operation || operation.IsCancellationRequested) return;
                 DownloadProgressChanged(value.Index, value.Count, value.Name, value.Bytes, value.Total);
             });
-            var result = await new DependencyBatchDownloader(downloader).DownloadAsync(plan, directory, rootDestination, progress, operation.Token);
+            var result = await new DependencyBatchDownloader(downloader).DownloadAsync(plan, directory, rootDestination, progress, operation.Token, catalog, installed);
             StatusLabel.Text = UiText.Format($"Архивов сохранено: {result.Files.Count} · {result.LibraryDirectory ?? rootDestination} · Установка не выполнялась");
         }
         catch (Exception ex) when (ex is OperationCanceledException or System.Net.Http.HttpRequestException or IOException or UnauthorizedAccessException or InvalidDataException or System.Text.Json.JsonException or ArgumentException or NotSupportedException or System.Security.Cryptography.CryptographicException)

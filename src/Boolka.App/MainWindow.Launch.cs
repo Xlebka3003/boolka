@@ -40,7 +40,7 @@ public partial class MainWindow
         catch (Exception ex) when (LaunchSequence.IsLaunchError(ex))
         {
             AppLog.Error("launch.failed", ex);
-            StatusLabel.Text = UiText.Get("Не удалось запустить ESO:") + " " + ex.Message;
+            StatusLabel.Text = UiText.Get("Не удалось запустить ESO:") + " " + UiError.Describe(ex);
         }
         finally
         {

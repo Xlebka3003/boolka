@@ -30,3 +30,10 @@ flag-icons v7.5.0: https://github.com/lipis/flag-icons
 Copyright (c) 2013 Panayiotis Lipiridis. MIT license.
 The license is distributed in Assets/Flags/LICENSE.txt. Original SVG sources
 are retained in the source Assets/Flags folder; PNGs generated for WPF.
+
+5. Avalonia desktop runtime (new desktop frontend)
+Avalonia 12.1.4: https://github.com/AvaloniaUI/Avalonia
+License: MIT, Copyright 2013-2026 The AvaloniaUI Project. Original license: THIRD-PARTY/Avalonia-MIT.txt.
+Rendering uses SkiaSharp and HarfBuzzSharp, distributed under their respective
+MIT/BSD and bundled third-party notices. See THIRD-PARTY for license texts.
+PolyForm does not replace these third-party licenses.

@@ -104,7 +104,7 @@ internal sealed class LaunchSettingsWindow : Window
                 panel.Children.Add(Label("Если ESO запускает Boolka, выберите в клиенте TTC: Setting → Auto Start Options → None.", 12));
             string? path = null;
             try { path = program.Resolve(folder); }
-            catch (Exception exception) when (LaunchSequence.IsLaunchError(exception)) { error.Text = exception.Message; }
+            catch (Exception exception) when (LaunchSequence.IsLaunchError(exception)) { error.Text = UiError.Describe(exception); }
             if (path is not null) panel.Children.Add(PathText(path));
             if (path is null || !File.Exists(path) || !LaunchProgram.Supported(path))
             {
@@ -181,7 +181,7 @@ internal sealed class LaunchSettingsWindow : Window
             if (directory is null || !Directory.Exists(directory)) throw new IOException(UiText.Get("Папка недоступна."));
             Process.Start(new ProcessStartInfo("explorer.exe") { UseShellExecute = false, ArgumentList = { directory } })?.Dispose();
         }
-        catch (Exception exception) when (LaunchSequence.IsLaunchError(exception)) { error.Text = exception.Message; }
+        catch (Exception exception) when (LaunchSequence.IsLaunchError(exception)) { error.Text = UiError.Describe(exception); }
     }
 
     private void Save(object sender, RoutedEventArgs args)
@@ -197,7 +197,7 @@ internal sealed class LaunchSettingsWindow : Window
             Selection = initial with { LaunchConfigured = true, LaunchSteam = steam.IsChecked == true, GameExecutable = gamePath.Text, LaunchPrograms = LaunchProgram.Normalize(programs) };
             DialogResult = true;
         }
-        catch (Exception exception) when (LaunchSequence.IsLaunchError(exception)) { error.Text = exception.Message; }
+        catch (Exception exception) when (LaunchSequence.IsLaunchError(exception)) { error.Text = UiError.Describe(exception); }
     }
 
     private static Border Card(UIElement content)

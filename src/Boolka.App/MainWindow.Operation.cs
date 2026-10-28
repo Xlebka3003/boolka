@@ -40,7 +40,7 @@ public partial class MainWindow
             HttpRequestException => UiText.Get("Сервер недоступен. Проверьте подключение и повторите попытку."),
             UnauthorizedAccessException => UiText.Get("Нет доступа к папке. Проверьте права и закройте программы, использующие файлы."),
             OperationCanceledException => UiText.Get("Время ожидания истекло. Повторите попытку."),
-            _ => error.Message
+            _ => UiError.Describe(error)
         });
     }
 

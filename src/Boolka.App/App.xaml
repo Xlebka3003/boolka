@@ -75,7 +75,7 @@
         Value="1" />
       <Setter
         Property="Padding"
-        Value="5" />
+        Value="0" />
       <Setter
         Property="Template">
         <Setter.Value>
@@ -91,6 +91,17 @@
                 IsItemsHost="True"
                 KeyboardNavigation.DirectionalNavigation="Cycle" />
             </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="MenuSeparator" TargetType="Separator">
+      <Setter Property="Focusable" Value="False" />
+      <Setter Property="Margin" Value="0" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Separator">
+            <Border Height="1" Background="{DynamicResource Theme.353C4E}" />
           </ControlTemplate>
         </Setter.Value>
       </Setter>
@@ -119,7 +130,7 @@
               <Grid>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition
-                    Width="22" />
+                    Width="Auto" />
                   <ColumnDefinition
                     Width="*" />
                   <ColumnDefinition
@@ -127,6 +138,7 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock
                   x:Name="CheckMark"
+                  Width="22"
                   Text="✓"
                   Visibility="Collapsed"
                   Foreground="{TemplateBinding Foreground}" />
@@ -228,7 +240,7 @@
           <ToggleButton Background="{TemplateBinding Background}" Focusable="False" IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" ClickMode="Press">
             <ToggleButton.Template><ControlTemplate TargetType="ToggleButton"><Border Background="{TemplateBinding Background}" BorderBrush="{DynamicResource Theme.353C4E}" BorderThickness="1" CornerRadius="{DynamicResource Theme.Radius7}" /></ControlTemplate></ToggleButton.Template>
           </ToggleButton>
-          <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" Margin="12,0,28,0" VerticalAlignment="Center" IsHitTestVisible="False" />
+          <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" Margin="12,0,28,0" VerticalAlignment="Center" IsHitTestVisible="False" />
           <TextBlock Text="⌄" HorizontalAlignment="Right" Margin="0,0,12,0" VerticalAlignment="Center" IsHitTestVisible="False" />
           <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="True" IsOpen="{TemplateBinding IsDropDownOpen}" Focusable="False">
             <Border x:Name="PopupBody" Background="{DynamicResource Theme.1B202C}" BorderBrush="{DynamicResource Theme.353C4E}" BorderThickness="1" MinWidth="{TemplateBinding ActualWidth}" MaxWidth="380" Margin="0,4,0,0" Padding="3">
@@ -264,6 +276,7 @@
     </Style>
     <Style
       TargetType="Button">
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
       <Setter Property="FocusVisualStyle" Value="{StaticResource KeyboardFocus}" />
       <Setter
         Property="Foreground"
@@ -292,7 +305,7 @@
                 CornerRadius="{DynamicResource Theme.Radius8}"
                 Padding="{TemplateBinding Padding}">
                 <ContentPresenter
-                  HorizontalAlignment="Center"
+                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                   VerticalAlignment="Center">
                   <ContentPresenter.Resources>
                     <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
@@ -330,6 +343,13 @@
                   Value="0.4" />
               </Trigger>
 
+              <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                  <Condition Binding="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Value="AddonInstallAction" />
+                  <Condition Binding="{Binding DataContext.IsIgnoredStatus, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
+                </MultiDataTrigger.Conditions>
+                <Setter TargetName="Body" Property="Opacity" Value="1" />
+              </MultiDataTrigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>

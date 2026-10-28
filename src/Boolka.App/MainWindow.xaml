@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Window
   x:Class="Boolka.MainWindow"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -17,6 +17,7 @@
   UseLayoutRounding="True"
   SnapsToDevicePixels="True"
   PreviewKeyDown="WindowKeyDown"
+  PreviewMouseLeftButtonDown="ClearSelectionOnBackground"
   PreviewMouseRightButtonUp="WindowRightMouseUp">
   <shell:WindowChrome.WindowChrome><shell:WindowChrome CaptionHeight="36" CornerRadius="0" ResizeBorderThickness="6" GlassFrameThickness="0" UseAeroCaptionButtons="False" /></shell:WindowChrome.WindowChrome>
   <Window.Resources>
@@ -43,7 +44,7 @@
     </Style>
     <DataTemplate
       x:Key="AddonListTemplate">
-      <Grid>
+      <Grid Background="Transparent">
         <Grid.ColumnDefinitions>
           <ColumnDefinition
             Width="92"
@@ -124,13 +125,13 @@
             IsEnabled="{Binding CanInstall}"
             FontSize="14"
             FontWeight="SemiBold"
-            Background="{Binding InstallActionBackground}"
+             Background="{Binding InstallActionBackground}"
             Foreground="{Binding InstallActionForeground}"
             Padding="16,9"
             MinWidth="116"
             HorizontalAlignment="Right"
             Margin="0,10,0,0"
-            x:Name="RowInstall">
+            x:Name="RowInstall" Tag="AddonInstallAction">
             <Button.ContentTemplate>
               <DataTemplate>
                 <TextBlock
@@ -211,7 +212,7 @@
       </DataTemplate.Triggers>
     </DataTemplate>
     <DataTemplate x:Key="AddonTilesTemplate">
-      <Grid ClipToBounds="True">
+      <Grid Background="Transparent" ClipToBounds="True">
         <Grid.RowDefinitions>
           <RowDefinition Height="80" />
           <RowDefinition Height="48" />
@@ -226,7 +227,7 @@
           <TextBlock Text="{Binding UpdatedText}" FontSize="12" Foreground="{DynamicResource Muted}" Margin="0,3,0,0" />
         </StackPanel>
         <TextBlock x:Name="TileHealth" Grid.Row="3" Text="{Binding DependencyStatusText}" Foreground="{Binding DependencyStatusColor}" FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-        <Button x:Name="TileInstall" Grid.Row="4" Content="{Binding InstallationLabel}" IsEnabled="{Binding CanInstall}" Click="InstallAddon" Padding="8,6" VerticalAlignment="Bottom" Background="{Binding InstallActionBackground}" Foreground="{Binding InstallActionForeground}" FontSize="13" FontWeight="SemiBold" />
+        <Button x:Name="TileInstall"  Grid.Row="4" Content="{Binding InstallationLabel}" IsEnabled="{Binding CanInstall}" Click="InstallAddon" Padding="8,6" VerticalAlignment="Bottom" Tag="AddonInstallAction" Background="{Binding InstallActionBackground}" Foreground="{Binding InstallActionForeground}" FontSize="13" FontWeight="SemiBold" />
       </Grid>
       <DataTemplate.Triggers>
         <DataTrigger Binding="{Binding DependencyStatusText}" Value=""><Setter TargetName="TileHealth" Property="Visibility" Value="Collapsed" /></DataTrigger>
@@ -396,10 +397,10 @@
           </Button>
         </StackPanel>
         <StackPanel
-          Grid.Row="2" Height="296">
+          Grid.Row="2" Height="348">
           <Button x:Name="LaunchButton" Foreground="{DynamicResource Theme.7DDDC0}" Height="44" Padding="0" Margin="0,0,0,8" Click="LaunchEso" AutomationProperties.Name="Launch ESO">
             <Button.ContextMenu><ContextMenu><MenuItem Header="ESO launch settings" Click="ConfigureLaunch" /></ContextMenu></Button.ContextMenu>
-            <StackPanel Orientation="Horizontal"><local:LucideIcon Icon="play" Width="22" Height="22" /><TextBlock x:Name="LaunchLabel" Text="ESO" Margin="12,0,0,0" VerticalAlignment="Center" /></StackPanel>
+            <StackPanel Orientation="Horizontal"><local:LucideIcon Icon="play" Width="32" Height="22" /><TextBlock x:Name="LaunchLabel" Text="ESO" Margin="12,0,0,0" VerticalAlignment="Center" /></StackPanel>
           </Button>
           <Button x:Name="SupportButton" Height="44" Padding="0" Margin="0,0,0,8" Foreground="#FF79C6"
                   Click="OpenDonation" AutomationProperties.Name="{DynamicResource Ui.3B024CCE3B598E9A}">
@@ -411,15 +412,21 @@
               </Style>
             </Button.Style>
             <StackPanel Orientation="Horizontal">
-              <local:LucideIcon Icon="heart" Width="22" Height="22" />
+              <local:LucideIcon Icon="heart" Width="32" Height="22" />
               <TextBlock x:Name="SupportLabel" Text="{DynamicResource Ui.0A3173E3188C6979}" Margin="12,0,0,0" VerticalAlignment="Center" />
             </StackPanel>
           </Button>
           <Button x:Name="AppUpdateButton" Height="44" Padding="0" Margin="0,0,0,8" IsEnabled="False"
                   AutomationProperties.Name="{DynamicResource Ui.B22AE3D8FB8F72DD}" AutomationProperties.HelpText="{DynamicResource Ui.60395C6C8515CE22}">
             <StackPanel Orientation="Horizontal">
-              <local:LucideIcon Icon="refresh-cw" Width="22" Height="22" />
+              <local:LucideIcon Icon="refresh-cw" Width="32" Height="22" />
               <TextBlock x:Name="AppUpdateLabel" Text="{DynamicResource Ui.B22AE3D8FB8F72DD}" Margin="12,0,0,0" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
+          <Button x:Name="GitHubButton" Height="44" Padding="0" Margin="0,0,0,8" Click="OpenGitHub" AutomationProperties.Name="GitHub">
+            <StackPanel Orientation="Horizontal">
+              <Viewbox Width="32" Height="22"><Path Width="22" Height="22" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Data="M409.132,114.573c-19.608-33.596-46.205-60.194-79.798-79.8C295.736,15.166,259.057,5.365,219.271,5.365   c-39.781,0-76.472,9.804-110.063,29.408c-33.596,19.605-60.192,46.204-79.8,79.8C9.803,148.168,0,184.854,0,224.63   c0,47.78,13.94,90.745,41.827,128.906c27.884,38.164,63.906,64.572,108.063,79.227c5.14,0.954,8.945,0.283,11.419-1.996   c2.475-2.282,3.711-5.14,3.711-8.562c0-0.571-0.049-5.708-0.144-15.417c-0.098-9.709-0.144-18.179-0.144-25.406l-6.567,1.136   c-4.187,0.767-9.469,1.092-15.846,1c-6.374-0.089-12.991-0.757-19.842-1.999c-6.854-1.231-13.229-4.086-19.13-8.559   c-5.898-4.473-10.085-10.328-12.56-17.556l-2.855-6.57c-1.903-4.374-4.899-9.233-8.992-14.559   c-4.093-5.331-8.232-8.945-12.419-10.848l-1.999-1.431c-1.332-0.951-2.568-2.098-3.711-3.429c-1.142-1.331-1.997-2.663-2.568-3.997   c-0.572-1.335-0.098-2.43,1.427-3.289c1.525-0.859,4.281-1.276,8.28-1.276l5.708,0.853c3.807,0.763,8.516,3.042,14.133,6.851   c5.614,3.806,10.229,8.754,13.846,14.842c4.38,7.806,9.657,13.754,15.846,17.847c6.184,4.093,12.419,6.136,18.699,6.136   c6.28,0,11.704-0.476,16.274-1.423c4.565-0.952,8.848-2.383,12.847-4.285c1.713-12.758,6.377-22.559,13.988-29.41   c-10.848-1.14-20.601-2.857-29.264-5.14c-8.658-2.286-17.605-5.996-26.835-11.14c-9.235-5.137-16.896-11.516-22.985-19.126   c-6.09-7.614-11.088-17.61-14.987-29.979c-3.901-12.374-5.852-26.648-5.852-42.826c0-23.035,7.52-42.637,22.557-58.817   c-7.044-17.318-6.379-36.732,1.997-58.24c5.52-1.715,13.706-0.428,24.554,3.853c10.85,4.283,18.794,7.952,23.84,10.994   c5.046,3.041,9.089,5.618,12.135,7.708c17.705-4.947,35.976-7.421,54.818-7.421s37.117,2.474,54.823,7.421l10.849-6.849   c7.419-4.57,16.18-8.758,26.262-12.565c10.088-3.805,17.802-4.853,23.134-3.138c8.562,21.509,9.325,40.922,2.279,58.24   c15.036,16.18,22.559,35.787,22.559,58.817c0,16.178-1.958,30.497-5.853,42.966c-3.9,12.471-8.941,22.457-15.125,29.979   c-6.191,7.521-13.901,13.85-23.131,18.986c-9.232,5.14-18.182,8.85-26.84,11.136c-8.662,2.286-18.415,4.004-29.263,5.146   c9.894,8.562,14.842,22.077,14.842,40.539v60.237c0,3.422,1.19,6.279,3.572,8.562c2.379,2.279,6.136,2.95,11.276,1.995   c44.163-14.653,80.185-41.062,108.068-79.226c27.88-38.161,41.825-81.126,41.825-128.906   C438.536,184.851,428.728,148.168,409.132,114.573z" /></Viewbox>
+              <TextBlock x:Name="GitHubLabel" Text="GitHub" Margin="12,0,0,0" VerticalAlignment="Center" />
             </StackPanel>
           </Button>
           <Button
@@ -431,13 +438,16 @@
             AutomationProperties.Name="{DynamicResource Ui.985B5E0F2CCF1BA0}"
             Width="44"
             Height="44">
-            <local:LucideIcon Icon="settings" Width="22" Height="22" />
+            <StackPanel Orientation="Horizontal">
+              <local:LucideIcon Icon="settings" Width="32" Height="22" />
+              <TextBlock x:Name="SettingsLabel" Text="{DynamicResource Ui.985B5E0F2CCF1BA0}" Margin="12,0,0,0" VerticalAlignment="Center" />
+            </StackPanel>
           </Button>
           <StackPanel
             x:Name="SidebarFooter"
             Margin="4,0,0,0">
             <TextBlock
-              Text="{DynamicResource Ui.851B9813F0F9C2DB}"
+              Text="{DynamicResource Ui.8D19FB92C4CC95E9}"
               Foreground="{DynamicResource Theme.B9A9F4}"
               FontSize="12" />
             <TextBlock
@@ -635,7 +645,7 @@
             <Grid
               Margin="0">
               <ListBox
-                x:Name="AddonList" ScrollViewer.ScrollChanged="CollectionViewportChanged"
+                x:Name="AddonList" FocusVisualStyle="{x:Null}" ScrollViewer.ScrollChanged="CollectionViewportChanged"
                 PreviewMouseWheel="AddonListMouseWheel"
                 Background="Transparent"
                 BorderThickness="0"
@@ -644,7 +654,7 @@
                 VirtualizingPanel.IsVirtualizing="True"
                 VirtualizingPanel.VirtualizationMode="Recycling"
                 SelectionChanged="AddonSelected"
-                KeyDown="AddonListKeyDown"
+                PreviewKeyDown="AddonListKeyDown"
                 PreviewMouseLeftButtonDown="AddonPointerDown"
                 PreviewMouseLeftButtonUp="AddonPointerUp">
                 <ListBox.LayoutTransform><ScaleTransform x:Name="CollectionScaleTransform" /></ListBox.LayoutTransform>
@@ -676,6 +686,8 @@
                   <Style
                     TargetType="ListBoxItem"
                     BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                    <Setter Property="HorizontalAlignment" Value="Stretch" />
                     <Setter
                       Property="Cursor"
                       Value="Hand" />
@@ -751,14 +763,15 @@
               VerticalAlignment="Top" />
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Margin="0,0,16,8">
                   <local:LucideIcon Icon="search" Width="18" Height="18" Margin="0,0,8,0" Foreground="{DynamicResource Theme.E9EDF5}" />
-                  <Button x:Name="DescriptionSmaller" AutomationProperties.Name="Decrease addon page size" Width="32" Height="32" Padding="0" Click="DecreaseDescription"><local:LucideIcon Icon="minus" /></Button>
-                  <Button x:Name="DescriptionScaleLabel" AutomationProperties.Name="Reset addon page size" Height="32" Padding="8,0" Click="ResetDescriptionScale" Content="100%" />
-                  <Button x:Name="DescriptionLarger" AutomationProperties.Name="Increase addon page size" Width="32" Height="32" Padding="0" Click="IncreaseDescription"><local:LucideIcon Icon="plus" /></Button>
+                  <Button x:Name="DescriptionSmaller" AutomationProperties.Name="{DynamicResource Ui.34B76F48C4682D81}" Width="32" Height="32" Padding="0" Click="DecreaseDescription"><local:LucideIcon Icon="minus" /></Button>
+                  <Button x:Name="DescriptionScaleLabel" AutomationProperties.Name="{DynamicResource Ui.872614F91F2592EF}" Height="32" Padding="8,0" Click="ResetDescriptionScale" Content="100%" />
+                  <Button x:Name="DescriptionLarger" AutomationProperties.Name="{DynamicResource Ui.0ABF56FBE7D451EB}" Width="32" Height="32" Padding="0" Click="IncreaseDescription"><local:LucideIcon Icon="plus" /></Button>
                 </StackPanel>
             </StackPanel>
             <WrapPanel
               Grid.Column="1"
               HorizontalAlignment="Right">
+              <Button x:Name="DetailOpenFolderButton" Click="OpenDetailFolder" Margin="0,0,8,8" IsEnabled="False" />
               <Button
                 x:Name="OpenButton"
                 Content="{DynamicResource Ui.CFBF342A295B095A}"
@@ -783,7 +796,7 @@
                 Content="{Binding InstallationLabel}"
                 IsEnabled="{Binding CanInstall}"
                 Click="InstallAddon"
-                Background="{Binding InstallActionBackground}"
+                Tag="AddonInstallAction" Background="{Binding InstallActionBackground}"
                 Foreground="{Binding InstallActionForeground}"
                 Margin="0,0,8,8"
                 Padding="22,10">
@@ -800,6 +813,7 @@
           </Grid>
           <ScrollViewer
             x:Name="DetailScroll"
+            FocusVisualStyle="{x:Null}"
             Grid.Row="1"
             VerticalScrollBarVisibility="Auto"
             HorizontalScrollBarVisibility="Disabled">
@@ -808,6 +822,12 @@
               Margin="0,0,16,24"
               HorizontalAlignment="Stretch">
               <StackPanel.LayoutTransform><ScaleTransform x:Name="DetailPageScale" /></StackPanel.LayoutTransform>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="9*" />
+                  <ColumnDefinition Width="11*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
               <TextBox Style="{StaticResource SelectableDetailText}"
                 x:Name="DetailTitle"
                 Text="{DynamicResource Ui.59CF5D270C686C01}"
@@ -836,6 +856,8 @@
                 Visibility="Collapsed">
                 <TextBlock
                   Text="{DynamicResource Ui.DE415AC8C5BC2846}"
+                  Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                  FontWeight="SemiBold"
                   TextWrapping="Wrap"
                   TextAlignment="Center" />
               </Button>
@@ -892,7 +914,31 @@
                       Margin="0,8,0,0" />
                   </StackPanel>
                 </Border>
-              </WrapPanel>
+              </WrapPanel>                </StackPanel>
+              <Border Grid.Column="1" BorderThickness="0" VerticalAlignment="Top"
+                Background="{DynamicResource Theme.191E29}"
+                CornerRadius="{DynamicResource Theme.Radius12}"
+                Padding="16"
+                Margin="16,0,0,8">
+                <StackPanel>
+                  <TextBlock
+                    Text="{DynamicResource Ui.325D9D9C61C6614F}"
+                    Foreground="{DynamicResource Theme.C8B7FF}"
+                    FontSize="20"
+                    FontWeight="SemiBold"
+                    Margin="0,0,0,12" />
+                  <TextBlock x:Name="DetailDependencySource" Foreground="{DynamicResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12" />
+                  <StackPanel x:Name="DetailDependencies" />
+                  <TextBlock
+                    x:Name="DetailDependencyPlan"
+                    TextWrapping="Wrap"
+                    Foreground="{DynamicResource Muted}"
+                    FontSize="14"
+                    Margin="0,16,0,0"
+                    LineHeight="21" />
+                </StackPanel>
+              </Border>
+              </Grid>
               <TextBlock
                 x:Name="DetailLoadStatus"
                 Foreground="{DynamicResource Muted}"
@@ -967,35 +1013,10 @@
                 Text="{DynamicResource Ui.EA2F1E8C38FB1EE8}"
                 TextWrapping="Wrap"
                 Foreground="{DynamicResource Theme.E0E5EF}"
-                
+
                 FontSize="14" />
 </Border>
-              <Border
-                Background="{DynamicResource Theme.191E29}"
-                CornerRadius="{DynamicResource Theme.Radius12}"
-                Padding="20"
-                Margin="0,28,0,0">
-                <StackPanel>
-                  <TextBlock
-                    Text="{DynamicResource Ui.325D9D9C61C6614F}"
-                    FontSize="20"
-                    FontWeight="SemiBold"
-                    Margin="0,0,0,12" />
-                  <TextBlock
-                    x:Name="DetailDependencies"
-                    Text="—"
-                    TextWrapping="Wrap"
-                    FontSize="16"
-                    LineHeight="24" />
-                  <TextBlock
-                    x:Name="DetailDependencyPlan"
-                    TextWrapping="Wrap"
-                    Foreground="{DynamicResource Muted}"
-                    FontSize="14"
-                    Margin="0,16,0,0"
-                    LineHeight="21" />
-                </StackPanel>
-              </Border>
+
               <TextBlock
                 Text="{DynamicResource Ui.C8FDC3C964CFC923}"
                 Foreground="{DynamicResource Muted}"

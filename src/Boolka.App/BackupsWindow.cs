@@ -72,7 +72,7 @@ public sealed class BackupsWindow : Window
             catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException)
             {
                 AppLog.Error("ui.operation.failed", ex);
-                status.Text = UiText.Get("Не удалось открыть резервные копии: ") + ex.Message;
+                status.Text = UiText.Get("Не удалось открыть резервные копии: ") + UiError.Describe(ex);
             }
         };
         actions.Children.Add(archive);
@@ -91,7 +91,7 @@ public sealed class BackupsWindow : Window
         {
             restore.IsEnabled = !working && !pending && list.SelectedItem is BackupInfo { IsValid: true };
             if (!working && list.SelectedItem is BackupInfo { Error: not null } damaged)
-                status.Text = UiText.Get("Повреждённая копия") + ": " + UiText.Get(damaged.Error);
+                status.Text = UiText.Get("Повреждённая копия") + ": " + UiError.Detail(damaged.Error);
         };
         Loaded += async (_, _) => await Run(() => Task.FromResult(""));
         Closing += (_, e) => { if (working) e.Cancel = true; };
@@ -127,9 +127,9 @@ public sealed class BackupsWindow : Window
         catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or JsonException or ArgumentException or System.ComponentModel.Win32Exception)
         {
             AppLog.Error("ui.operation.failed", ex);
-            status.Text = UiText.Get("Операция с копией не завершена: ") + UiText.Get(ex.Message);
+            status.Text = UiText.Get("Операция с копией не завершена: ") + UiError.Describe(ex);
             try { pending = BackupService.HasPending(folder); recover.Visibility = pending ? Visibility.Visible : Visibility.Collapsed; }
-            catch (Exception check) when (check is IOException or UnauthorizedAccessException) { status.Text += "\n" + check.Message; }
+            catch (Exception check) when (check is IOException or UnauthorizedAccessException) { status.Text += "\n" + UiError.Describe(check); }
         }
         finally
         {
@@ -151,7 +151,7 @@ public sealed class BackupsWindow : Window
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
         {
             AppLog.Error("ui.operation.failed", ex);
-            status.Text = UiText.Get("Не удалось открыть резервные копии: ") + ex.Message;
+            status.Text = UiText.Get("Не удалось открыть резервные копии: ") + UiError.Describe(ex);
         }
     }
 }

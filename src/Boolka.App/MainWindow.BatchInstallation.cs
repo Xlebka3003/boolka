@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Net.Http;
 using System.Windows;
 
@@ -16,46 +16,31 @@ public partial class MainWindow
         var added = 0;
         var updated = 0;
         var position = 0;
-        long downloadingId = 0;
         foreach (var original in batchPlan.Packages)
         {
             operation.Token.ThrowIfCancellationRequested();
+            EnsureStartupUpdateGameClosed();
             position++;
             var id = original.CatalogId!.Value;
             if (completed.Contains(id)) continue;
             try
             {
                 var root = catalog.Single(x => x.CatalogId == id);
-                var unit = DependencyResolver.Build(root, catalog, installed);
+                var unit = ArchiveDependencyPlanner.Build(root, catalog, installed);
                 if (!unit.IsReady) throw new InvalidDataException(string.Join("; ", unit.Issues));
                 if (unit.Packages.Any(x => !allowed.Contains(x.CatalogId!.Value) || failed.Contains(x.CatalogId.Value)))
                     throw new InvalidDataException(UiText.Get("Обязательная библиотека не установлена. Проект пропущен."));
 
-                foreach (var package in unit.Packages)
-                {
-                    var packageId = package.CatalogId!.Value;
-                    if (archives.ContainsKey(packageId)) continue;
-                    var path = Path.Combine(directory, packageId + ".zip");
-                    downloadingId = packageId;
-                    var downloadPosition = position;
-                    // Кэшируем только завершённые архивы; downloader сам удаляет неполный файл.
-                    var progress = new Progress<DownloadProgress>(value =>
-                    {
-                        if (activeDownload == operation && !installCommitting && !operation.IsCancellationRequested
-                            && downloadingId == packageId && position == downloadPosition)
-                            DownloadProgressChanged(downloadPosition, batchPlan.Packages.Count, package.Name, value.Bytes, value.Total);
-                    });
-                    DownloadProgressChanged(position, batchPlan.Packages.Count, package.Name, 0, null);
-                    await downloader.DownloadAsync(packageId, path, progress, operation.Token);
-                    archives.Add(packageId, path);
-                }
+                unit = await PrepareArchivesAsync(unit, directory, archives, operation, discoverDependencies: packImport is null);
+                if (unit.Packages.Any(package => failed.Contains(package.CatalogId!.Value)))
+                    throw new InvalidDataException(UiText.Get("Обязательная библиотека не установлена. Проект пропущен."));
 
                 installCommitting = true;
-                downloadingId = 0;
                 OperationProgress.IsIndeterminate = true;
                 StatusLabel.Text = UiText.Format($"Устанавливаем {position} из {batchPlan.Packages.Count} · {root.Name}");
                 var newCount = unit.Packages.Count(x => !x.IsInstalled);
                 // Один мод с обязательными библиотеками — отдельная транзакция с собственным откатом.
+                EnsureStartupUpdateGameClosed();
                 var result = await new SafeInstaller().InstallAsync(unit, archives, target, operation.Token, allowReplacement: packImport is null);
                 lastBackupDirectory = result.BackupDirectory;
                 added += newCount;
@@ -69,12 +54,11 @@ public partial class MainWindow
             {
                 AppLog.Error("install.package.failed", ex);
                 failed.Add(id);
-                errors.Add(original.Name + ": " + ex.Message);
+                errors.Add(original.Name + ": " + UiError.Describe(ex));
             }
             finally
             {
                 installCommitting = false;
-                downloadingId = 0;
             }
 
             // Следующий план строится по фактическому результату предыдущей транзакции.

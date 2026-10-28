@@ -18,18 +18,18 @@ public partial class MainWindow
         SidebarLibraryLabel.Visibility = Visibility.Collapsed;
         SidebarOtherLabel.Visibility = Visibility.Collapsed;
         EsoGameLabel.Visibility = labelVisibility;
-        AppUpdateLabel.Visibility = SupportLabel.Visibility = LaunchLabel.Visibility = labelVisibility;
-        foreach (var button in new[] { EsoGameButton, AppUpdateButton, SupportButton, LaunchButton })
+        AppUpdateLabel.Visibility = SupportLabel.Visibility = LaunchLabel.Visibility = SettingsLabel.Visibility = GitHubLabel.Visibility = labelVisibility;
+        foreach (var button in new[] { EsoGameButton, AppUpdateButton, SupportButton, LaunchButton, GitHubButton, SettingsButton })
         {
             button.Width = sidebarCollapsed ? 44 : double.NaN;
             button.HorizontalAlignment = sidebarCollapsed ? HorizontalAlignment.Center : HorizontalAlignment.Stretch;
+            button.HorizontalContentAlignment = sidebarCollapsed ? HorizontalAlignment.Center : HorizontalAlignment.Left;
             button.Padding = sidebarCollapsed ? new Thickness(0) : new Thickness(8, 0, 8, 0);
         }
         WowGameLabel.Visibility = labelVisibility;
         SidebarFooter.Visibility = labelVisibility;
         System.Windows.Controls.Grid.SetColumn(SidebarToggle, sidebarCollapsed ? 0 : 1);
         SidebarToggle.HorizontalAlignment = sidebarCollapsed ? HorizontalAlignment.Center : HorizontalAlignment.Right;
-        SettingsButton.HorizontalAlignment = sidebarCollapsed ? HorizontalAlignment.Center : HorizontalAlignment.Left;
 
         SidebarToggle.Content = new LucideIcon { Icon = sidebarCollapsed ? "chevron-right" : "chevron-left" };
         UpdateSidebarCaptionWidth();

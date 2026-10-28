@@ -115,7 +115,7 @@ public partial class MainWindow
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
         {
             AppLog.Error("ui.operation.failed", ex);
-            StatusLabel.Text = UiText.Get("Не удалось сохранить настройки отображения: ") + ex.Message;
+            StatusLabel.Text = UiText.Get("Не удалось сохранить настройки отображения: ") + UiError.Describe(ex);
         }
     }
 
@@ -123,7 +123,7 @@ public partial class MainWindow
     {
         e.Handled = true;
         if (busy || catalogMode || sender is not ListBoxItem { DataContext: Addon addon } row) return;
-        AddonList.SelectedItem = addon;
+        if (!row.IsSelected) AddonList.SelectedItem = addon;
         var menu = BuildAddonContextMenu(addon);
         menu.PlacementTarget = row;
         row.ContextMenu = menu;
@@ -140,17 +140,23 @@ public partial class MainWindow
             menu.Items.Add(item);
         }
 
+        var selection = AddonList.SelectedItems.OfType<Addon>().ToArray();
         var identified = addon.PreviewId is > 0;
-        Add(UiText.Get("Удалить аддон"), !busy && Directory.Exists(addon.Path), async (_, _) => await RemoveAddonAsync(addon));
+        Add(selection.Length > 1 ? UiText.Format($"Удалить выбранные ({selection.Length})") : UiText.Get("Удалить аддон"),
+            !busy && selection.Length > 0, async (_, _) => await RemoveAddonsAsync(selection));
+        if (selection.Length > 1) return menu;
+        menu.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
         Add(UiText.Get("Переустановить"), !busy && identified, async (_, _) => await ExecuteInstallationAsync(addon, false, reinstall: true));
+        menu.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
         Add(addon.UpdatesIgnored ? UiText.Get("Не игнорировать обновления") : UiText.Get("Игнорировать обновления"), !busy && identified, (_, _) => ToggleIgnored(addon));
+        menu.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
         Add(UiText.Get("Открыть страницу на ESOUI"), !busy && identified, (_, _) =>
         {
             try { Process.Start(new ProcessStartInfo($"https://www.esoui.com/downloads/info{addon.PreviewId}") { UseShellExecute = true }); }
             catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
             {
                 AppLog.Error("ui.operation.failed", ex);
-                StatusLabel.Text = UiText.Get("Не удалось открыть страницу: ") + ex.Message;
+                StatusLabel.Text = UiText.Get("Не удалось открыть страницу: ") + UiError.Describe(ex);
             }
         });
         return menu;
@@ -196,21 +202,24 @@ public partial class MainWindow
         ImportPackButton.Visibility = DetailPage.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    private async Task RemoveAddonAsync(Addon addon)
+    private async Task RemoveAddonsAsync(IReadOnlyList<Addon> addons)
     {
-        if (busy || currentFolder is null) return;
-        var folder = Path.GetFullPath(addon.Path);
+        if (busy || catalogMode || currentFolder is null || addons.Count == 0) return;
+        var folders = addons.Select(addon => Path.GetFullPath(addon.Path)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        var folder = folders[0];
         var target = currentFolder;
         var summary = UiText.Format($"Переместить папку аддона в резервную копию:\n{folder}\n\nОстальные аддоны и SavedVariables останутся на месте. Закройте ESO перед продолжением.");
+        if (folders.Length > 1)
+            summary = UiText.Format($"Переместить выбранные папки в резервную копию ({folders.Length})?\n{string.Join("\n", folders)}\n\nОстальные аддоны и SavedVariables останутся на месте. Закройте ESO перед продолжением.");
         if (new OperationConfirmationWindow(this, UiText.Get("Удаление аддона"), summary).ShowDialog() != true) return;
         SetBusy(true, UiText.Get("Перемещаем аддон в резервную копию…"));
         installCommitting = true;
         try
         {
-            var result = await new SafeAddonRemoval().RemoveAsync(target, folder, lifetime.Token);
+            var result = await new SafeAddonRemoval().RemoveAsync(target, folders, lifetime.Token);
             lastBackupDirectory = result.BackupDirectory;
             OpenBackupButton.Visibility = Visibility.Visible;
-            StatusLabel.Text = UiText.Get("Аддон удалён из AddOns. Резервная копия: ") + result.BackupDirectory;
+            StatusLabel.Text = UiText.Format($"Удалено аддонов: {result.InstalledFolders.Count}. Резервная копия: {result.BackupDirectory}");
             try
             {
                 installed = (await provider.ScanAsync(target)).Addons;
@@ -219,13 +228,13 @@ public partial class MainWindow
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 AppLog.Error("ui.operation.failed", ex);
-                StatusLabel.Text += UiText.Get(" · Не удалось обновить список: ") + ex.Message;
+                StatusLabel.Text += UiText.Get(" · Не удалось обновить список: ") + UiError.Describe(ex);
             }
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException or OperationCanceledException)
         {
             AppLog.Error("ui.operation.failed", ex);
-            StatusLabel.Text = UiText.Get("Удаление не завершено: ") + ex.Message;
+            StatusLabel.Text = UiText.Get("Удаление не завершено: ") + UiError.Describe(ex);
         }
         finally
         {

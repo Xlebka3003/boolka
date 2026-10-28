@@ -13,6 +13,8 @@
 !/docs/
 /docs/*
 !/docs/screenshots/
+!/docs/releases/
+!/.github/
 
 **/bin/
 **/obj/
@@ -23,3 +25,9 @@
 **/*.snk
 **/.env
 **/logs/
+
+# Исходники и проверки Windows/WPF, отдельные сторонние лицензии.
+!/tests/
+!/THIRD-PARTY/
+/src/Boolka.Desktop/
+/tests/Avalonia.Smoke/

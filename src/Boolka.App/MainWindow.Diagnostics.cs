@@ -24,7 +24,7 @@ public partial class MainWindow
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
         {
             AppLog.Error("diagnostics.export.failed", ex);
-            StatusLabel.Text = UiText.Get("Не удалось сохранить журнал: ") + ex.Message;
+            StatusLabel.Text = UiText.Get("Не удалось сохранить журнал: ") + UiError.Describe(ex);
             if (owner is SettingsWindow settingsOwner) settingsOwner.SetDiagnosticStatus(StatusLabel.Text);
         }
         finally { if (owner is SettingsWindow settingsOwner) settingsOwner.SetDiagnosticBusy(false); }

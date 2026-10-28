@@ -20,6 +20,8 @@ public partial class MainWindow
 
     private void ApplyDescriptionScale()
     {
+        foreach (var label in new[] { "Уменьшить страницу аддона", "Увеличить страницу аддона", "Сбросить масштаб страницы аддона" })
+            UiResources.Register(label);
         // Имя сохранённого параметра оставлено для совместимости; теперь меняется вся страница.
         DetailPageScale.ScaleX = DetailPageScale.ScaleY = preferences.DescriptionScale;
         DescriptionScaleLabel.Content = (preferences.DescriptionScale * 100).ToString("0", CultureInfo.InvariantCulture) + "%";

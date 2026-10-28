@@ -29,11 +29,15 @@ public partial class MainWindow
                 catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
                 {
                     AppLog.Error("ui.operation.failed", ex);
-                    StatusLabel.Text = UiText.Get("Копия восстановлена, но не удалось пересканировать папку: ") + ex.Message;
+                    StatusLabel.Text = UiText.Get("Копия восстановлена, но не удалось пересканировать папку: ") + UiError.Describe(ex);
                 }
             });
             backups.ShowDialog();
-        }, currentFolder is not null, () => SaveDiagnostics(dialog!), () => OpenLaunchSettings(dialog));
+        }, currentFolder is not null, () => SaveDiagnostics(dialog!), () => OpenLaunchSettings(dialog), enabled =>
+        {
+            preferences = preferences with { AutoUpdateAddonsOnStartup = enabled };
+            SavePreferences();
+        });
         dialog.ShowDialog();
     }
 
