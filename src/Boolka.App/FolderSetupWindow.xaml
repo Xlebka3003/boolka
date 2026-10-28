@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+  x:Class="Boolka.FolderSetupWindow"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  Title="{DynamicResource Ui.6CC4577478753BB1}"
+  Width="680"
+  SizeToContent="Height"
+  ResizeMode="NoResize"
+  WindowStartupLocation="CenterOwner"
+  Background="{DynamicResource Theme.10131B}"
+  ShowInTaskbar="False">
+  <StackPanel
+    Margin="30">
+    <TextBlock
+      Text="{DynamicResource Ui.88F3D2D78D37360C}"
+      FontSize="26"
+      FontWeight="SemiBold" />
+    <TextBlock
+      Text="{DynamicResource Ui.30C3DBE08EF93886}"
+      FontSize="16"
+      Margin="0,14,0,6" />
+    <TextBlock
+      Text="{DynamicResource Ui.8AC7E381B30894A6}"
+      TextWrapping="Wrap"
+      Foreground="{DynamicResource Muted}"
+      LineHeight="21" />
+    <TextBlock
+      Text="{DynamicResource Ui.3326F1D97A3DFD86}"
+      FontSize="10"
+      Foreground="{DynamicResource Muted}"
+      Margin="0,24,0,10" />
+    <DockPanel>
+      <Button
+        Content="{DynamicResource Ui.904540EC0BE6FA41}"
+        DockPanel.Dock="Right"
+        Click="Browse"
+        Margin="10,0,0,0" />
+      <TextBox
+        x:Name="FolderPathBox"
+        AutomationProperties.Name="{DynamicResource Ui.1244F68AB7617CE4}"
+        FontSize="13"
+        Background="{DynamicResource Theme.1B202C}"
+        Foreground="{DynamicResource Theme.E9EDF5}"
+        CaretBrush="White"
+        BorderThickness="1"
+        BorderBrush="{DynamicResource Theme.353C4E}"
+        Padding="10"
+        VerticalContentAlignment="Center"
+        TextChanged="PathChanged" />
+    </DockPanel>
+    <TextBlock
+      x:Name="ErrorLabel"
+      TextWrapping="Wrap"
+      Foreground="{DynamicResource Theme.F1BDA9}"
+      Margin="0,12,0,0"
+      LineHeight="20" />
+    <TextBlock
+      Text="{DynamicResource Ui.2F544BBDEC7CAE63}"
+      Foreground="{DynamicResource Muted}"
+      TextWrapping="Wrap"
+      Margin="0,18,0,0" />
+    <StackPanel
+      Orientation="Horizontal"
+      HorizontalAlignment="Right"
+      Margin="0,26,0,0">
+      <Button
+        Content="{DynamicResource Ui.7996F711496A5424}"
+        IsCancel="True"
+        Margin="0,0,10,0" />
+      <Button
+        Content="{DynamicResource Ui.68D827AD675CF982}"
+        Click="Confirm"
+        IsDefault="True"
+        Background="{DynamicResource Theme.A995EC}"
+        Foreground="{DynamicResource Theme.14121D}" />
+    </StackPanel>
+  </StackPanel>
+</Window>

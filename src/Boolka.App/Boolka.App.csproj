@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Version>0.33.0</Version>
+    <AssemblyName>boolka</AssemblyName>
+    <RootNamespace>Boolka</RootNamespace>
+    <Product>boolka</Product>
+    <Authors>Xlebka</Authors>
+    <Copyright>Copyright (c) 2026 Xlebka</Copyright>
+    <PackageLicenseExpression>PolyForm-Noncommercial-1.0.0</PackageLicenseExpression>
+    <Title>boolka</Title>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="Assets\eso.ico" />
+    <Resource Include="Assets\Flags\*.png" />
+    <Content Include="Assets\Flags\LICENSE.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Resource Include="Assets\wow.ico" />
+    <Resource Include="Assets\Categories\*.jpg" />
+    <Content Include="Assets\Lucide\LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\THIRD_PARTY_NOTICES.txt" Link="THIRD_PARTY_NOTICES.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
+
+
+
+
+

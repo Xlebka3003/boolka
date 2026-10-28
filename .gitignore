@@ -1,0 +1,25 @@
+# Track only source, user documentation, licenses and reviewed screenshots.
+/*
+!/.gitignore
+!/.gitattributes
+!/README.md
+!/LICENSE
+!/THIRD_PARTY_NOTICES.txt
+!/DIAGNOSTICS.md
+!/BACKUPS.md
+!/PACKS.md
+!/IMAGE_SOURCES.md
+!/src/
+!/docs/
+/docs/*
+!/docs/screenshots/
+
+**/bin/
+**/obj/
+**/.vs/
+**/*.user
+**/*.suo
+**/*.pfx
+**/*.snk
+**/.env
+**/logs/
