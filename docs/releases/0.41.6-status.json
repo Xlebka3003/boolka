@@ -1,0 +1,41 @@
+{
+  "version": "0.41.6",
+  "status": "success",
+  "sourceCommit": "a23389b0a99e5c35c718eb363c896186c27c28f7",
+  "run": "https://github.com/Xlebka3003/boolka/actions/runs/40774891674",
+  "release": {
+    "assets": [
+      {
+        "apiUrl": "https://api.github.com/repos/Xlebka3003/boolka/releases/assets/686450103",
+        "contentType": "text/plain; charset=utf-8",
+        "createdAt": "2026-10-28T21:49:48Z",
+        "digest": "sha256:43e0fb00898e6e7126985d5c449c718e1443cfedfa24cd43fe3d8d675d7d1a07",
+        "downloadCount": 0,
+        "id": "RA_kwDOVZ4RQM4o6mW3",
+        "label": "",
+        "name": "boolka-0.41.6-SHA256SUMS.txt",
+        "size": 186,
+        "state": "uploaded",
+        "updatedAt": "2026-10-28T21:49:48Z",
+        "url": "https://github.com/Xlebka3003/boolka/releases/download/v0.41.6/boolka-0.41.6-SHA256SUMS.txt"
+      },
+      {
+        "apiUrl": "https://api.github.com/repos/Xlebka3003/boolka/releases/assets/686450104",
+        "contentType": "application/zip",
+        "createdAt": "2026-10-28T21:49:48Z",
+        "digest": "sha256:91466db09246e0fc240574abd1fdb08580b03948ddb02d5d58f61eb9e2aa2759",
+        "downloadCount": 0,
+        "id": "RA_kwDOVZ4RQM4o6mW4",
+        "label": "",
+        "name": "boolka-0.41.6-windows-x64-standalone.zip",
+        "size": 66806936,
+        "state": "uploaded",
+        "updatedAt": "2026-10-28T21:49:50Z",
+        "url": "https://github.com/Xlebka3003/boolka/releases/download/v0.41.6/boolka-0.41.6-windows-x64-standalone.zip"
+      }
+    ],
+    "isDraft": false,
+    "isPrerelease": false,
+    "url": "https://github.com/Xlebka3003/boolka/releases/tag/v0.41.6"
+  }
+}
