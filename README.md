@@ -4,13 +4,7 @@
 
 ## Скриншоты
 
-![Установленные аддоны](docs/screenshots/0.41.6/installed-addons.png)
-
-![Каталог ESOUI](docs/screenshots/0.41.6/catalog.png)
-
-![Настройки](docs/screenshots/0.41.6/settings.png)
-
-![Карточка аддона](docs/screenshots/0.41.6/addon-details.png)
+![Интерфейс boolka](docs/screenshots/boolka-overview.gif)
 
 ## Установка
 
