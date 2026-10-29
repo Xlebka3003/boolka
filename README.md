@@ -1,5 +1,7 @@
 ﻿# boolka
 
+**Русский** | [English](README.en.md)
+
 Менеджер аддонов The Elder Scrolls Online для Windows.
 
 ## GIF
