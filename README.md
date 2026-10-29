@@ -1,4 +1,4 @@
-# boolka
+﻿# boolka
 
 Менеджер аддонов The Elder Scrolls Online для Windows.
 
@@ -15,7 +15,7 @@
 ## Установка
 
 1. Скачайте **Windows x64 ZIP** из [последнего релиза](https://github.com/Xlebka3003/boolka/releases/latest).
-2. Распакуйте весь архив и запустите `boolka.exe`. Устанавливать .NET отдельно не нужно.
+2. Распакуйте весь архив и запустите `boolka.exe`.
 3. Выберите папку `Документы\Elder Scrolls Online\live\AddOns`.
 
 Перед установкой и обновлением модов закройте ESO.
