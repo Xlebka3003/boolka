@@ -1,10 +1,17 @@
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Windows;
 
 namespace Boolka;
 
 public partial class MainWindow
 {
+    private void SetStatus(string text, bool needsAttention = false)
+    {
+        StatusLabel.Text = text;
+        StatusLabel.SetResourceReference(System.Windows.Controls.Control.ForegroundProperty, needsAttention ? "StatusAttention" : "Muted");
+        StatusLabel.FontWeight = needsAttention ? FontWeights.SemiBold : FontWeights.Normal;
+    }
+
     private Func<Task>? retryOperation;
     private string? retryFolder;
 
@@ -23,9 +30,9 @@ public partial class MainWindow
         OperationProgress.IsIndeterminate = total is not > 0;
         if (total is > 0)
             OperationProgress.Value = 100.0 * (index - 1 + Math.Clamp((double)bytes / total.Value, 0, 1)) / count;
-        StatusLabel.Text = total is > 0
+        SetStatus(total is > 0
             ? UiText.Format($"Скачиваем {index} из {count} · {name}: {bytes / 1048576.0:0.0} из {total / 1048576.0:0.0} МБ")
-            : UiText.Format($"Скачиваем {index} из {count} · {name}: {bytes / 1048576.0:0.0} МБ");
+            : UiText.Format($"Скачиваем {index} из {count} · {name}: {bytes / 1048576.0:0.0} МБ"));
     }
 
     private void OperationFailed(Exception error, Func<Task> retry)
@@ -35,13 +42,13 @@ public partial class MainWindow
         retryOperation = retry;
         retryFolder = currentFolder;
         RetryOperationButton.Visibility = Visibility.Visible;
-        StatusLabel.Text = UiText.Get("Не удалось завершить операцию: ") + (error switch
+        SetStatus(UiText.Get("Не удалось завершить операцию: ") + (error switch
         {
             HttpRequestException => UiText.Get("Сервер недоступен. Проверьте подключение и повторите попытку."),
             UnauthorizedAccessException => UiText.Get("Нет доступа к папке. Проверьте права и закройте программы, использующие файлы."),
             OperationCanceledException => UiText.Get("Время ожидания истекло. Повторите попытку."),
             _ => UiError.Describe(error)
-        });
+        }), needsAttention: true);
     }
 
     private void EndOperation()
@@ -57,7 +64,7 @@ public partial class MainWindow
         {
             retryOperation = null;
             RetryOperationButton.Visibility = Visibility.Collapsed;
-            StatusLabel.Text = UiText.Get("Папка изменилась. Запустите нужную операцию заново.");
+            SetStatus(UiText.Get("Папка изменилась. Запустите нужную операцию заново."), needsAttention: true);
             return;
         }
         await retry();

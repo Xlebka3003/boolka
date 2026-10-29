@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Windows;
 
 namespace Boolka;
@@ -16,7 +16,7 @@ public partial class MainWindow
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
         {
             AppLog.Error("github.open.failed", ex);
-            StatusLabel.Text = UiText.Get("Не удалось открыть страницу: ") + UiError.Describe(ex);
+            SetStatus(UiText.Get("Не удалось открыть страницу: ") + UiError.Describe(ex), needsAttention: true);
         }
     }
 
@@ -26,7 +26,7 @@ public partial class MainWindow
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
         {
             AppLog.Error("support.open.failed", ex);
-            StatusLabel.Text = UiText.Get("Не удалось открыть страницу поддержки: ") + UiError.Describe(ex);
+            SetStatus(UiText.Get("Не удалось открыть страницу поддержки: ") + UiError.Describe(ex), needsAttention: true);
         }
     }
 }

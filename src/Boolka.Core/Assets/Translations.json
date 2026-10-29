@@ -1,5 +1,6 @@
 {
   "de": {
+    "The AddOns folder changed. Click to refresh the list.": "Der AddOns-Ordner wurde geändert. Klicken, um die Liste zu aktualisieren.",
     "boolka {0} is available. Click to download and update.": "boolka {0} ist verfügbar. Zum Herunterladen und Aktualisieren klicken.",
     "boolka checks for updates automatically.": "boolka sucht automatisch nach Updates.",
     "Checking for a boolka update…": "boolka-Update wird gesucht…",
@@ -506,6 +507,7 @@
     "Windows helpers cannot run directly on this system. Choose a compatible program manually.": "Windows-Hilfsprogramme laufen auf diesem System nicht direkt. Wähle ein kompatibles Programm manuell."
   },
   "fr": {
+    "The AddOns folder changed. Click to refresh the list.": "Le dossier AddOns a changé. Cliquez pour actualiser la liste.",
     "boolka {0} is available. Click to download and update.": "boolka {0} est disponible. Cliquez pour télécharger et mettre à jour.",
     "boolka checks for updates automatically.": "boolka recherche automatiquement les mises à jour.",
     "Checking for a boolka update…": "Recherche d’une mise à jour de boolka…",
@@ -1012,6 +1014,7 @@
     "Windows helpers cannot run directly on this system. Choose a compatible program manually.": "Les outils Windows ne s’exécutent pas directement sur ce système. Choisissez manuellement un programme compatible."
   },
   "es": {
+    "The AddOns folder changed. Click to refresh the list.": "La carpeta AddOns ha cambiado. Haz clic para actualizar la lista.",
     "boolka {0} is available. Click to download and update.": "boolka {0} está disponible. Haz clic para descargar y actualizar.",
     "boolka checks for updates automatically.": "boolka busca actualizaciones automáticamente.",
     "Checking for a boolka update…": "Buscando una actualización de boolka…",
@@ -1518,6 +1521,7 @@
     "Windows helpers cannot run directly on this system. Choose a compatible program manually.": "Las herramientas de Windows no se ejecutan directamente en este sistema. Elige manualmente un programa compatible."
   },
   "pt-BR": {
+    "The AddOns folder changed. Click to refresh the list.": "A pasta AddOns mudou. Clique para atualizar a lista.",
     "boolka {0} is available. Click to download and update.": "boolka {0} está disponível. Clique para baixar e atualizar.",
     "boolka checks for updates automatically.": "boolka verifica atualizações automaticamente.",
     "Checking for a boolka update…": "Verificando atualização do boolka…",
@@ -2024,6 +2028,7 @@
     "Windows helpers cannot run directly on this system. Choose a compatible program manually.": "Os auxiliares do Windows não executam diretamente neste sistema. Escolha um programa compatível manualmente."
   },
   "pl": {
+    "The AddOns folder changed. Click to refresh the list.": "Folder AddOns został zmieniony. Kliknij, aby odświeżyć listę.",
     "boolka {0} is available. Click to download and update.": "Dostępna jest boolka {0}. Kliknij, aby pobrać i zaktualizować.",
     "boolka checks for updates automatically.": "boolka automatycznie sprawdza aktualizacje.",
     "Checking for a boolka update…": "Sprawdzanie aktualizacji boolka…",
@@ -2530,6 +2535,7 @@
     "Windows helpers cannot run directly on this system. Choose a compatible program manually.": "Narzędzia Windows nie działają bezpośrednio w tym systemie. Wybierz zgodny program ręcznie."
   },
   "zh-CN": {
+    "The AddOns folder changed. Click to refresh the list.": "AddOns 文件夹已更改。点击刷新列表。",
     "boolka {0} is available. Click to download and update.": "boolka {0} 已可用。点击下载并更新。",
     "boolka checks for updates automatically.": "boolka 会自动检查更新。",
     "Checking for a boolka update…": "正在检查 boolka 更新…",
@@ -3036,6 +3042,7 @@
     "Windows helpers cannot run directly on this system. Choose a compatible program manually.": "Windows 辅助程序无法在此系统直接运行。请手动选择兼容程序。"
   },
   "ja": {
+    "The AddOns folder changed. Click to refresh the list.": "AddOns フォルダーが変更されました。クリックして一覧を更新します。",
     "boolka {0} is available. Click to download and update.": "boolka {0} が利用できます。クリックしてダウンロード・更新します。",
     "boolka checks for updates automatically.": "boolka は更新を自動的に確認します。",
     "Checking for a boolka update…": "boolka の更新を確認中…",

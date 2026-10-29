@@ -1,9 +1,7 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
     [string]$SourceDirectory,
-    [Parameter(Mandatory = $true)]
-    [string]$CompilerPath,
     [string]$OutputDirectory = (Join-Path $PSScriptRoot '../distributions')
 )
 
@@ -21,9 +19,7 @@ function Assert-OrdinaryPath([string]$Path) {
 }
 
 $source = (Get-Item -LiteralPath $SourceDirectory).FullName
-$compiler = (Get-Item -LiteralPath $CompilerPath).FullName
 Assert-OrdinaryPath $source
-Assert-OrdinaryPath $compiler
 $expected = @(
     'Assets/Flags/LICENSE.txt',
     'Assets/Lucide/LICENSE.txt',
@@ -55,9 +51,8 @@ New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 $output = (Get-Item -LiteralPath $OutputDirectory).FullName
 Assert-OrdinaryPath $output
 $archiveName = "boolka-$version-windows-x64-standalone.zip"
-$setupName = "boolka-$version-windows-x64-setup.exe"
 $hashName = "boolka-$version-SHA256SUMS.txt"
-foreach ($name in @($archiveName, $setupName, $hashName)) {
+foreach ($name in @($archiveName, $hashName)) {
     if (Test-Path -LiteralPath (Join-Path $output $name)) { throw "Существующий выпуск не перезаписывается: $name" }
 }
 
@@ -65,10 +60,6 @@ foreach ($name in @($archiveName, $setupName, $hashName)) {
 $staging = Join-Path $output ('.pack-' + [Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $staging | Out-Null
 try {
-    $iss = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../installer/boolka.iss')).Path
-    & $compiler /Qp "/DSourceDir=$source" "/DOutputDir=$staging" "/DProductVersion=$version" "/DOutputName=$([IO.Path]::GetFileNameWithoutExtension($setupName))" $iss
-    if ($LASTEXITCODE -ne 0) { throw "Ошибка компиляции установщика: $LASTEXITCODE" }
-    if (-not (Test-Path -LiteralPath (Join-Path $staging $setupName))) { throw 'Компилятор не создал установщик.' }
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $zipPath = Join-Path $staging $archiveName
     [IO.Compression.ZipFile]::CreateFromDirectory($source, $zipPath, [IO.Compression.CompressionLevel]::Optimal, $false)
@@ -85,11 +76,11 @@ try {
             if ($hash -ne (Get-FileHash -LiteralPath $original -Algorithm SHA256).Hash) { throw "ZIP отличается от исходника: $($entry.FullName)" }
         }
     } finally { $zip.Dispose() }
-    $lines = foreach ($name in @($archiveName, $setupName)) {
+    $lines = foreach ($name in @($archiveName)) {
         '{0}  {1}' -f (Get-FileHash -LiteralPath (Join-Path $staging $name) -Algorithm SHA256).Hash.ToLowerInvariant(), $name
     }
     $lines | Set-Content -LiteralPath (Join-Path $staging $hashName) -Encoding utf8
-    foreach ($name in @($archiveName, $setupName, $hashName)) {
+    foreach ($name in @($archiveName, $hashName)) {
         Move-Item -LiteralPath (Join-Path $staging $name) -Destination (Join-Path $output $name)
     }
 } finally {
@@ -100,5 +91,5 @@ try {
     }
     if (Test-Path -LiteralPath $resolvedStaging) { Remove-Item -LiteralPath $resolvedStaging -Recurse -Force }
 }
-Get-Item -LiteralPath (Join-Path $output $archiveName), (Join-Path $output $setupName), (Join-Path $output $hashName) | Select-Object Name, Length, FullName
+Get-Item -LiteralPath (Join-Path $output $archiveName), (Join-Path $output $hashName) | Select-Object Name, Length, FullName
 

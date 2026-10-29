@@ -32,6 +32,7 @@ public static class UiText
 
     public static readonly IReadOnlyDictionary<string, string> English = new Dictionary<string, string>(StringComparer.Ordinal)
     {
+        ["Папка AddOns изменилась. Нажмите, чтобы обновить список."] = "The AddOns folder changed. Click to refresh the list.",
         ["Доступна boolka {0}. Нажмите, чтобы скачать и обновить."] = "boolka {0} is available. Click to download and update.",
         ["Проверка обновлений boolka выполняется автоматически."] = "boolka checks for updates automatically.",
         ["Проверяем обновление boolka…"] = "Checking for a boolka update…",

@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Automation;
@@ -65,7 +65,7 @@ public partial class MainWindow
             applicationRelease = release;
             if (release is null)
             {
-                StatusLabel.Text = UiText.Get("Проверка обновлений boolka выполняется автоматически.");
+                SetStatus(UiText.Get("Проверка обновлений boolka выполняется автоматически."));
                 return;
             }
             var executable = Environment.ProcessPath ?? throw new IOException("Не найден исполняемый файл приложения.");
@@ -81,10 +81,10 @@ public partial class MainWindow
                 if (operation.IsCancellationRequested) return;
                 OperationProgress.IsIndeterminate = false;
                 OperationProgress.Value = bytes * 100.0 / release.Size;
-                StatusLabel.Text = UiText.Format($"Скачиваем boolka: {bytes / 1048576.0:0.0} из {release.Size / 1048576.0:0.0} МБ");
+                SetStatus(UiText.Format($"Скачиваем boolka: {bytes / 1048576.0:0.0} из {release.Size / 1048576.0:0.0} МБ"));
             });
             await applicationReleases.DownloadAsync(release, archive, progress, operation.Token);
-            StatusLabel.Text = UiText.Get("Проверяем файлы обновления. Приложение перезапустится автоматически.");
+            SetStatus(UiText.Get("Проверяем файлы обновления. Приложение перезапустится автоматически."));
             OperationProgress.IsIndeterminate = true;
             using var parent = Process.GetCurrentProcess();
             var target = Path.GetDirectoryName(executable)!;
@@ -113,12 +113,12 @@ public partial class MainWindow
         }
         catch (OperationCanceledException)
         {
-            if (!lifetime.IsCancellationRequested) StatusLabel.Text = UiText.Get("Обновление boolka отменено. Файлы приложения не изменены.");
+            if (!lifetime.IsCancellationRequested) SetStatus(UiText.Get("Обновление boolka отменено. Файлы приложения не изменены."));
         }
         catch (Exception error) when (error is not OutOfMemoryException)
         {
             AppLog.Error("app.update.failed", error);
-            if (!lifetime.IsCancellationRequested) StatusLabel.Text = UiText.Get("Не удалось обновить boolka: ") + UiError.Describe(error);
+            if (!lifetime.IsCancellationRequested) SetStatus(UiText.Get("Не удалось обновить boolka: ") + UiError.Describe(error), needsAttention: true);
         }
         finally
         {

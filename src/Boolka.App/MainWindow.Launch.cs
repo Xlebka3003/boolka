@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Windows;
 
 namespace Boolka;
@@ -29,18 +29,18 @@ public partial class MainWindow
         try
         {
             var report = await LaunchSequence.RunAsync(preferences, currentFolder, new LaunchProcessRunner(),
-                name => StatusLabel.Text = UiText.Get("Запускаем: ") + name, lifetime.Token);
+                name => SetStatus(UiText.Get("Запускаем: ") + name), lifetime.Token);
             preferences = preferences with { HarvestPreparationStamp = report.HarvestStamp };
             SavePreferences();
-            StatusLabel.Text = UiText.Get("Запуск ESO передан системе. Актуальность баз не подтверждена.");
+            SetStatus(UiText.Get("Запуск ESO передан системе. Актуальность баз не подтверждена."));
             if (report.Warnings.Count > 0)
-                StatusLabel.Text += " " + UiText.Get("Пропущено: ") + string.Join(" · ", report.Warnings);
+                SetStatus(StatusLabel.Text + " " + UiText.Get("Пропущено: ") + string.Join(" · ", report.Warnings), needsAttention: true);
         }
         catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
         catch (Exception ex) when (LaunchSequence.IsLaunchError(ex))
         {
             AppLog.Error("launch.failed", ex);
-            StatusLabel.Text = UiText.Get("Не удалось запустить ESO:") + " " + UiError.Describe(ex);
+            SetStatus(UiText.Get("Не удалось запустить ESO:") + " " + UiError.Describe(ex), needsAttention: true);
         }
         finally
         {

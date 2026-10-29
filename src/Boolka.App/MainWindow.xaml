@@ -448,7 +448,7 @@
             x:Name="SidebarFooter"
             Margin="4,0,0,0">
             <TextBlock
-              Text="{DynamicResource Ui.0D05B5B8F896339A}"
+              Text="{DynamicResource Ui.205800635DB91E89}"
               Foreground="{DynamicResource Theme.B9A9F4}"
               FontSize="12" />
             <TextBlock
@@ -1081,8 +1081,9 @@
             MaxHeight="64"
             VerticalScrollBarVisibility="Auto"
             HorizontalScrollBarVisibility="Disabled">
-            <TextBlock
+            <TextBox
               x:Name="StatusLabel"
+              Style="{StaticResource SelectableDetailText}"
               Text="{DynamicResource Ui.B9D25F6C0B3B5288}"
               Foreground="{DynamicResource Muted}"
               FontSize="14"

@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 
 namespace Boolka;
 
@@ -49,7 +49,7 @@ public partial class MainWindow
             ReturnToList();
         }
 
-        StatusLabel.Text = catalogMode ? CatalogStatus() : InstalledStatus();
+        SetStatus(catalogMode ? CatalogStatus() : InstalledStatus());
     }
 
     private void ShowWowComingSoon(object sender, RoutedEventArgs e)
@@ -59,6 +59,6 @@ public partial class MainWindow
             return;
         }
 
-        StatusLabel.Text = UiText.Get("Поддержка World of Warcraft появится позже.");
+        SetStatus(UiText.Get("Поддержка World of Warcraft появится позже."));
     }
 }

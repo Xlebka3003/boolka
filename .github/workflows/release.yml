@@ -51,22 +51,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet run --project tests/ApplicationUpdates/ApplicationUpdates.csproj --no-build
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Компилятор установщика
+      - name: ZIP и контрольная сумма
         run: |
-          $ErrorActionPreference = 'Stop'
-          $tools = Join-Path $env:RUNNER_TEMP 'boolka-inno'
-          New-Item -ItemType Directory -Force $tools | Out-Null
-          $download = Join-Path $tools 'innosetup.exe'
-          Invoke-WebRequest 'https://github.com/jrsoftware/issrc/releases/download/is-7_1_1/innosetup-7.1.1-x64.exe' -OutFile $download
-          $signature = Get-AuthenticodeSignature -LiteralPath $download
-          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Pyrsys') { throw 'Не подтверждена подпись компилятора.' }
-          $compiler = Join-Path $tools 'portable'
-          $setup = Start-Process -FilePath $download -ArgumentList @('/PORTABLE=1', '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=$compiler") -Wait -PassThru -WindowStyle Hidden
-          if ($setup.ExitCode -ne 0 -or !(Test-Path (Join-Path $compiler 'ISCC.exe'))) { throw 'Компилятор не распакован.' }
-          "BOOLKA_INNO_COMPILER=$compiler/ISCC.exe" >> $env:GITHUB_ENV
-      - name: Установщик, ZIP и контрольные суммы
-        run: |
-          ./scripts/Package-Windows.ps1 -SourceDirectory artifacts/boolka -CompilerPath $env:BOOLKA_INNO_COMPILER -OutputDirectory artifacts/packages
+          ./scripts/Package-Windows.ps1 -SourceDirectory artifacts/boolka -OutputDirectory artifacts/packages
       - name: Публикация релиза
         env:
           GH_TOKEN: ${{ github.token }}
@@ -74,10 +61,10 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $version = $env:BOOLKA_RELEASE_VERSION
-          gh release create "v$version" "artifacts/packages/boolka-$version-windows-x64-standalone.zip" "artifacts/packages/boolka-$version-windows-x64-setup.exe" "artifacts/packages/boolka-$version-SHA256SUMS.txt" --target $env:GITHUB_SHA --title "boolka $version — Windows x64" --notes-file "docs/releases/$version.md" --latest
+          gh release create "v$version" "artifacts/packages/boolka-$version-windows-x64-standalone.zip" "artifacts/packages/boolka-$version-SHA256SUMS.txt" --target $env:GITHUB_SHA --title "boolka $version — Windows x64" --notes-file "docs/releases/$version.md" --latest
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $release = gh release view "v$version" --json url,isDraft,isPrerelease,assets | ConvertFrom-Json
-          if ($LASTEXITCODE -ne 0 -or $release.isDraft -or $release.isPrerelease -or @($release.assets).Count -ne 3) { throw 'Не подтверждён опубликованный релиз с тремя файлами.' }
+          if ($LASTEXITCODE -ne 0 -or $release.isDraft -or $release.isPrerelease -or @($release.assets).Count -ne 2) { throw 'Не подтверждён опубликованный релиз с двумя файлами.' }
           $release | ConvertTo-Json -Depth 10 | Set-Content artifacts/published-release.json -Encoding utf8
       - name: Сохранение результата публикации
         if: always()

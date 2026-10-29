@@ -37,7 +37,7 @@ public partial class MainWindow
 
                 installCommitting = true;
                 OperationProgress.IsIndeterminate = true;
-                StatusLabel.Text = UiText.Format($"Устанавливаем {position} из {batchPlan.Packages.Count} · {root.Name}");
+                SetStatus(UiText.Format($"Устанавливаем {position} из {batchPlan.Packages.Count} · {root.Name}"));
                 var newCount = unit.Packages.Count(x => !x.IsInstalled);
                 // Один мод с обязательными библиотеками — отдельная транзакция с собственным откатом.
                 EnsureStartupUpdateGameClosed();
@@ -63,7 +63,7 @@ public partial class MainWindow
 
             // Следующий план строится по фактическому результату предыдущей транзакции.
             // При ошибке чтения прекращаем пакет, не продолжая со старой моделью папки.
-            installed = (await provider.ScanAsync(target)).Addons;
+            installed = (await ScanInstalledFolderAsync(target)).Addons;
             ApplyComparisons();
         }
 
@@ -74,6 +74,6 @@ public partial class MainWindow
                 packImport is null ? () => ExecuteInstallationAsync(null, librariesOnly, batch: true) : () => PreviewPackImportAsync(packImport.Pack));
             summary += " · " + string.Join("; ", errors);
         }
-        StatusLabel.Text = summary;
+        SetStatus(summary, needsAttention: errors.Count > 0 || initiallySkipped.Count > 0);
     }
 }

@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Net.Http;
 using System.Windows;
 using Microsoft.Win32;
@@ -13,7 +13,7 @@ public partial class MainWindow
         SetBusy(true, UiText.Get("Проверяем состав набора и каталог ESOUI…"));
         try
         {
-            installed = (await provider.ScanAsync(currentFolder)).Addons;
+            installed = (await ScanInstalledFolderAsync(currentFolder)).Addons;
             catalog = await provider.GetCatalogAsync(lifetime.Token);
             catalogLoadedAt = DateTimeOffset.Now;
             ApplyComparisons();
@@ -22,7 +22,7 @@ public partial class MainWindow
         catch (Exception ex) when (ex is InvalidDataException or HttpRequestException or IOException or UnauthorizedAccessException or System.Text.Json.JsonException or OperationCanceledException)
         {
             AppLog.Error("ui.operation.failed", ex);
-            if (!lifetime.IsCancellationRequested) StatusLabel.Text = UiText.Get("Не удалось открыть набор: ") + UiError.Describe(ex); return false;
+            if (!lifetime.IsCancellationRequested) SetStatus(UiText.Get("Не удалось открыть набор: ") + UiError.Describe(ex), needsAttention: true); return false;
         }
         finally { SetBusy(false); Refresh(); }
     }
@@ -49,11 +49,11 @@ public partial class MainWindow
             OverwritePrompt = true
         };
         if (save.ShowDialog(this) != true) return;
-        try { PackFile.Write(save.FileName, pack); StatusLabel.Text = UiText.Get("Набор сохранён: ") + save.FileName; }
+        try { PackFile.Write(save.FileName, pack); SetStatus(UiText.Get("Набор сохранён: ") + save.FileName); }
         catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
         {
             AppLog.Error("ui.operation.failed", ex);
-            StatusLabel.Text = UiText.Get("Не удалось сохранить набор: ") + UiError.Describe(ex);
+            SetStatus(UiText.Get("Не удалось сохранить набор: ") + UiError.Describe(ex), needsAttention: true);
         }
     }
 
@@ -65,12 +65,12 @@ public partial class MainWindow
         try { await PreviewPackImportAsync(PackFile.Read(open.FileName)); }
         catch (OperationCanceledException ex)
         {
-            if (!lifetime.IsCancellationRequested) StatusLabel.Text = UiError.Describe(ex);
+            if (!lifetime.IsCancellationRequested) SetStatus(UiError.Describe(ex), needsAttention: true);
         }
         catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException or System.Text.Json.JsonException or ArgumentException or NotSupportedException)
         {
             AppLog.Error("ui.operation.failed", ex);
-            StatusLabel.Text = UiText.Get("Не удалось открыть набор: ") + UiError.Describe(ex);
+            SetStatus(UiText.Get("Не удалось открыть набор: ") + UiError.Describe(ex), needsAttention: true);
         }
     }
 

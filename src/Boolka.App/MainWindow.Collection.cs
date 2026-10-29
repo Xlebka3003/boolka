@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -115,7 +115,7 @@ public partial class MainWindow
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
         {
             AppLog.Error("ui.operation.failed", ex);
-            StatusLabel.Text = UiText.Get("Не удалось сохранить настройки отображения: ") + UiError.Describe(ex);
+            SetStatus(UiText.Get("Не удалось сохранить настройки отображения: ") + UiError.Describe(ex), needsAttention: true);
         }
     }
 
@@ -156,7 +156,7 @@ public partial class MainWindow
             catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
             {
                 AppLog.Error("ui.operation.failed", ex);
-                StatusLabel.Text = UiText.Get("Не удалось открыть страницу: ") + UiError.Describe(ex);
+                SetStatus(UiText.Get("Не удалось открыть страницу: ") + UiError.Describe(ex), needsAttention: true);
             }
         });
         return menu;
@@ -171,7 +171,7 @@ public partial class MainWindow
         SavePreferences();
         ApplyComparisons();
         Refresh();
-        StatusLabel.Text = InstalledStatus();
+        SetStatus(InstalledStatus());
     }
 
     private async void UpdateAll(object sender, RoutedEventArgs e)
@@ -219,22 +219,22 @@ public partial class MainWindow
             var result = await new SafeAddonRemoval().RemoveAsync(target, folders, lifetime.Token);
             lastBackupDirectory = result.BackupDirectory;
             OpenBackupButton.Visibility = Visibility.Visible;
-            StatusLabel.Text = UiText.Format($"Удалено аддонов: {result.InstalledFolders.Count}. Резервная копия: {result.BackupDirectory}");
+            SetStatus(UiText.Format($"Удалено аддонов: {result.InstalledFolders.Count}. Резервная копия: {result.BackupDirectory}"));
             try
             {
-                installed = (await provider.ScanAsync(target)).Addons;
+                installed = (await ScanInstalledFolderAsync(target)).Addons;
                 ApplyComparisons();
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 AppLog.Error("ui.operation.failed", ex);
-                StatusLabel.Text += UiText.Get(" · Не удалось обновить список: ") + UiError.Describe(ex);
+                SetStatus(StatusLabel.Text + UiText.Get(" · Не удалось обновить список: ") + UiError.Describe(ex), needsAttention: true);
             }
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException or OperationCanceledException)
         {
             AppLog.Error("ui.operation.failed", ex);
-            StatusLabel.Text = UiText.Get("Удаление не завершено: ") + UiError.Describe(ex);
+            SetStatus(UiText.Get("Удаление не завершено: ") + UiError.Describe(ex), needsAttention: true);
         }
         finally
         {

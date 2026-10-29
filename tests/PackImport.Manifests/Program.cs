@@ -82,6 +82,16 @@ if(args.Contains("--live")){
  Check((await provider.ScanAsync(liveTarget)).Addons.Count>=4,"actual four archives and dependencies install in isolated folder");
 }
 
+// Похожие проекты с одной папкой различаем только по подтверждаемому требованию сборки.
+var sharedRoot=Package(99001,"SharedRoot") with { PackageModules=[new("SharedRoot","1",["SharedLib>=24"])] };
+var matchingLibrary=Package(99002,"SharedLib",true) with { PackageModules=[new("SharedLib","24",[],true)] };
+var obsoleteLibrary=Package(99003,"SharedLib",true) with { PackageModules=[new("SharedLib","2",[],true)] };
+var sharedPlan=DependencyResolver.Build(sharedRoot,[sharedRoot,matchingLibrary,obsoleteLibrary],[]);
+Check(sharedPlan.IsReady && sharedPlan.Packages.Any(p=>p.CatalogId==99002) && sharedPlan.Packages.All(p=>p.CatalogId!=99003),"minimum build removes obsolete same-name library candidate");
+Check(!DependencyResolver.Build(sharedRoot,[sharedRoot,obsoleteLibrary],[]).IsReady,"no candidate meeting minimum remains blocked");
+Check(!DependencyResolver.Build(sharedRoot,[sharedRoot,matchingLibrary,obsoleteLibrary with {PackageModules=[new("SharedLib","25",[],true)]}],[]).IsReady,"multiple suitable candidates remain ambiguous");
+Check(!DependencyResolver.Build(sharedRoot with {PackageModules=[new("SharedRoot","1",["SharedLib"])]},[sharedRoot,matchingLibrary,obsoleteLibrary],[]).IsReady,"no-minimum requirement does not guess a project");
+
 sealed class FixtureHandler(IReadOnlyDictionary<long, string> paths) : System.Net.Http.HttpMessageHandler
 {
     protected override Task<System.Net.Http.HttpResponseMessage> SendAsync(System.Net.Http.HttpRequestMessage request, CancellationToken token)

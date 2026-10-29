@@ -21,15 +21,15 @@ public partial class MainWindow
             {
                 try
                 {
-                    installed = (await provider.ScanAsync(target)).Addons;
+                    installed = (await ScanInstalledFolderAsync(target)).Addons;
                     ApplyComparisons();
                     Refresh();
-                    StatusLabel.Text = catalogMode ? CatalogStatus() : InstalledStatus();
+                    SetStatus(catalogMode ? CatalogStatus() : InstalledStatus());
                 }
                 catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
                 {
                     AppLog.Error("ui.operation.failed", ex);
-                    StatusLabel.Text = UiText.Get("Копия восстановлена, но не удалось пересканировать папку: ") + UiError.Describe(ex);
+                    SetStatus(UiText.Get("Копия восстановлена, но не удалось пересканировать папку: ") + UiError.Describe(ex), needsAttention: true);
                 }
             });
             backups.ShowDialog();
@@ -50,12 +50,13 @@ public partial class MainWindow
         UpdateCategoryOptions();
         ThemeManager.Apply(theme);
         UpdateApplicationButton();
+        UpdateFolderChangeButton();
         CategoryIcons.ApplyMode(preferences.PreviewMode);
         UpdateViewButtons();
         ApplyCollectionScale();
         ApplyComparisons();
         Refresh();
-        StatusLabel.Text = catalogMode ? CatalogStatus() : InstalledStatus();
+        SetStatus(catalogMode ? CatalogStatus() : InstalledStatus());
         SavePreferences();
     }
 }

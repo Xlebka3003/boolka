@@ -92,7 +92,7 @@ public partial class MainWindow : Window
             if (await LoadFolderAsync(saved.Folder, false))
             {
                 await FetchCatalogAsync(true, false);
-                if (saved.Warning is not null) StatusLabel.Text += " · " + UiError.Detail(saved.Warning);
+                if (saved.Warning is not null) SetStatus(StatusLabel.Text + " · " + UiError.Detail(saved.Warning), needsAttention: true);
                 await TryStartupAddonUpdateAsync();
                 ShowPreviousCrashNotice();
                 return;
@@ -106,7 +106,7 @@ public partial class MainWindow : Window
         {
             if (await LoadFolderAsync(dialog.SelectedFolder, true)) await FetchCatalogAsync(true, false);
         }
-        else StatusLabel.Text = UiText.Get("Папка не выбрана · Её можно указать кнопкой «Выбрать папку»");
+        else SetStatus(UiText.Get("Папка не выбрана · Её можно указать кнопкой «Выбрать папку»"), needsAttention: true);
         await TryStartupAddonUpdateAsync();
         ShowPreviousCrashNotice();
     }
@@ -114,12 +114,12 @@ public partial class MainWindow : Window
     private void OpenAddonsFolder(object sender, RoutedEventArgs e)
     {
         if (currentFolder is null || !Directory.Exists(currentFolder))
-        { StatusLabel.Text = UiText.Get("Сначала выберите папку ESO live\\AddOns кнопкой «Выбрать папку»."); return; }
+        { SetStatus(UiText.Get("Сначала выберите папку ESO live\\AddOns кнопкой «Выбрать папку»."), needsAttention: true); return; }
         try { Process.Start(new ProcessStartInfo("explorer.exe") { ArgumentList = { currentFolder }, UseShellExecute = false }); }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or IOException or UnauthorizedAccessException)
         {
             AppLog.Error("ui.operation.failed", ex);
-            StatusLabel.Text = UiError.Describe(ex);
+            SetStatus(UiError.Describe(ex), needsAttention: true);
         }
     }
 
@@ -140,7 +140,7 @@ public partial class MainWindow : Window
         try
         {
             AppLog.Info("scan.begin");
-            var result = await provider.ScanAsync(folder);
+            var result = await ScanInstalledFolderAsync(folder);
             AppLog.Info($"scan.complete count={result.Addons.Count} skipped={result.Skipped}");
             if (lifetime.IsCancellationRequested) return false;
             installed = result.Addons;
@@ -149,14 +149,14 @@ public partial class MainWindow : Window
             FolderLabel.Text = folder;
             if (!preserveView) catalogMode = false;
             Refresh();
-            StatusLabel.Text = UiText.Format($"Найдено: {installed.Count} · Пропущено недоступных файлов или ссылок: {result.Skipped} · Файлы не изменены");
+            SetStatus(UiText.Format($"Найдено: {installed.Count} · Пропущено недоступных файлов или ссылок: {result.Skipped} · Файлы не изменены"), needsAttention: result.Skipped > 0);
             if (saveSelection)
             {
                 try { settings.Save(folder); }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
                 {
                     AppLog.Error("ui.operation.failed", ex);
-                    StatusLabel.Text += UiText.Get(" · Не удалось сохранить выбор. При следующем запуске укажите папку заново.");
+                    SetStatus(StatusLabel.Text + UiText.Get(" · Не удалось сохранить выбор. При следующем запуске укажите папку заново."), needsAttention: true);
                 }
             }
             return true;
@@ -164,7 +164,7 @@ public partial class MainWindow : Window
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
         {
             AppLog.Error("ui.operation.failed", ex);
-            StatusLabel.Text = UiText.Get("Не удалось прочитать папку: ") + UiError.Describe(ex); return false;
+            SetStatus(UiText.Get("Не удалось прочитать папку: ") + UiError.Describe(ex), needsAttention: true); return false;
         }
         finally { SetBusy(false); }
     }
@@ -218,7 +218,7 @@ public partial class MainWindow : Window
         ? UiText.Format($"Установлено: {installed.Count} · Обновлений: {installed.Count(x => x.HasUpdate && !x.UpdatesIgnored)} · Игнорируются: {installed.Count(x => x.UpdatesIgnored)} · Каталог {catalogLoadedAt:HH:mm}")
         : UiText.Format($"Установлено: {installed.Count} · Нажмите «Пересканировать» для сравнения с ESOUI");
 
-    private void ShowInstalled(object sender, RoutedEventArgs e) { catalogMode = false; Refresh(); StatusLabel.Text = InstalledStatus(); }
+    private void ShowInstalled(object sender, RoutedEventArgs e) { catalogMode = false; Refresh(); SetStatus(InstalledStatus()); }
 
     private async void CheckUpdates(object sender, RoutedEventArgs e) => await RescanAsync(catalogMode);
 
@@ -241,7 +241,7 @@ public partial class MainWindow : Window
         if (busy) return;
         catalogMode = showCatalog;
         Refresh();
-        if (catalog.Count > 0 && !forceReload) { StatusLabel.Text = catalogMode ? CatalogStatus() : InstalledStatus(); return; }
+        if (catalog.Count > 0 && !forceReload) { SetStatus(catalogMode ? CatalogStatus() : InstalledStatus()); return; }
         SetBusy(true, UiText.Get("Подключаемся к каталогу ESOUI…"));
         catalogEmptyMessage = UiText.Get("Загружаем каталог ESOUI…");
         if (catalogMode) EmptyText.Text = catalogEmptyMessage;
@@ -252,7 +252,7 @@ public partial class MainWindow : Window
             catalogLoadedAt = DateTimeOffset.Now;
             ApplyComparisons();
             Refresh();
-            StatusLabel.Text = catalogMode ? CatalogStatus() : InstalledStatus();
+            SetStatus(catalogMode ? CatalogStatus() : InstalledStatus());
         }
         catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
         catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or OperationCanceledException or System.Text.Json.JsonException or InvalidDataException or IOException)
@@ -269,7 +269,7 @@ public partial class MainWindow : Window
             };
             catalogEmptyMessage = reason + UiText.Get(" Нажмите «Обновить каталог», чтобы повторить.");
             Refresh();
-            StatusLabel.Text = catalog.Count > 0 ? reason + UiText.Get(" Использованы сведения каталога, загруженные ранее в этой сессии.") : reason;
+            SetStatus(catalog.Count > 0 ? reason + UiText.Get(" Использованы сведения каталога, загруженные ранее в этой сессии.") : reason, needsAttention: true);
         }
         finally { SetBusy(false); }
     }
@@ -571,6 +571,7 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         ResetGalleryGesture();
+        StopAddonFolderWatcher();
         lifetime.Cancel();
         applicationReleases.Dispose();
         detailsOperation?.Cancel(); imageOperation?.Cancel();
@@ -582,7 +583,7 @@ public partial class MainWindow : Window
         if (installCommitting)
         {
             e.Cancel = true;
-            StatusLabel.Text = UiText.Get("Дождитесь завершения операции или отката — сохраняем файлы безопасно.");
+            SetStatus(UiText.Get("Дождитесь завершения операции или отката — сохраняем файлы безопасно."), needsAttention: true);
         }
         base.OnClosing(e);
     }
@@ -590,6 +591,7 @@ public partial class MainWindow : Window
     private void SetBusy(bool value, string? message = null)
     {
         busy = value;
+        UpdateFolderChangeButton();
         UpdateApplicationButton();
         BackButton.IsEnabled = RetryDetailsButton.IsEnabled = !value;
         DetailInstallButton.IsEnabled = !value && (AddonList.SelectedItem as Addon)?.CanInstall == true;
@@ -607,7 +609,7 @@ public partial class MainWindow : Window
         SortDirectionButton.IsEnabled = !value;
         SettingsButton.IsEnabled = !value;
         UpdateCollectionActions();
-        if (message is not null) StatusLabel.Text = message;
+        if (message is not null) SetStatus(message);
     }
 
     private void SearchChanged(object sender, TextChangedEventArgs e) { if (AddonList is not null) Refresh(); }
@@ -757,7 +759,7 @@ public partial class MainWindow : Window
         if (folder is null) return;
         try { Process.Start(new ProcessStartInfo("explorer.exe") { ArgumentList = { folder }, UseShellExecute = false }); }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
-        { StatusLabel.Text = UiText.Get("Не удалось открыть: ") + UiError.Describe(ex); }
+        { SetStatus(UiText.Get("Не удалось открыть: ") + UiError.Describe(ex), needsAttention: true); }
     }
 
     private void OpenSelected(object sender, RoutedEventArgs e)
@@ -768,14 +770,14 @@ public partial class MainWindow : Window
             if (catalogMode && addon.WebUrl is not null) Process.Start(new ProcessStartInfo(addon.WebUrl) { UseShellExecute = true });
             else if (!catalogMode && Directory.Exists(addon.Path)) Process.Start(new ProcessStartInfo("explorer.exe") { ArgumentList = { addon.Path }, UseShellExecute = false });
         }
-        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { StatusLabel.Text = UiText.Get("Не удалось открыть: ") + UiError.Describe(ex); }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { SetStatus(UiText.Get("Не удалось открыть: ") + UiError.Describe(ex), needsAttention: true); }
     }
 
     private void OpenMatchedPage(object sender, RoutedEventArgs e)
     {
         if (AddonList.SelectedItem is not Addon { Comparison.CatalogAddon.WebUrl: { } url }) return;
         try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
-        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { StatusLabel.Text = UiText.Get("Не удалось открыть страницу: ") + UiError.Describe(ex); }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { SetStatus(UiText.Get("Не удалось открыть страницу: ") + UiError.Describe(ex), needsAttention: true); }
     }
 
 
@@ -801,16 +803,16 @@ public partial class MainWindow : Window
     {
         if (lastBackupDirectory is null) return;
         try { Process.Start(new ProcessStartInfo("explorer.exe") { ArgumentList = { lastBackupDirectory }, UseShellExecute = false }); }
-        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { StatusLabel.Text = UiText.Get("Не удалось открыть резервную копию: ") + UiError.Describe(ex); }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { SetStatus(UiText.Get("Не удалось открыть резервную копию: ") + UiError.Describe(ex), needsAttention: true); }
     }
 
     private async Task ExecuteInstallationAsync(Addon? chosen, bool librariesOnly, bool reinstall = false, bool batch = false, PackImportApproval? packImport = null)
     {
         if (currentFolder is null || !Directory.Exists(currentFolder))
-        { StatusLabel.Text = UiText.Get("Сначала выберите папку ESO live\\AddOns кнопкой «Выбрать папку»."); return; }
+        { SetStatus(UiText.Get("Сначала выберите папку ESO live\\AddOns кнопкой «Выбрать папку»."), needsAttention: true); return; }
         var target = currentFolder;
         if (!System.IO.Path.GetFileName(System.IO.Path.TrimEndingDirectorySeparator(target)).Equals("AddOns", StringComparison.OrdinalIgnoreCase))
-        { StatusLabel.Text = UiText.Get("Для установки выберите папку с именем AddOns внутри ESO live."); return; }
+        { SetStatus(UiText.Get("Для установки выберите папку с именем AddOns внутри ESO live."), needsAttention: true); return; }
         var id = chosen?.PreviewId;
         if (!batch && id is not > 0) return;
         using var operation = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
@@ -822,7 +824,7 @@ public partial class MainWindow : Window
         try
         {
             Directory.CreateDirectory(directory);
-            installed = (await provider.ScanAsync(target)).Addons;
+            installed = (await ScanInstalledFolderAsync(target)).Addons;
             catalog = await provider.GetCatalogAsync(operation.Token);
             catalogLoadedAt = DateTimeOffset.Now;
             ApplyComparisons();
@@ -842,7 +844,7 @@ public partial class MainWindow : Window
                 ApplyComparisons();
                 plan = prepared.Plan.Plan;
                 skipped = prepared.Plan.Skipped;
-                if (plan is null) { StatusLabel.Text = UiText.Get("Недостающих пакетов для установки нет."); return; }
+                if (plan is null) { SetStatus(UiText.Get("Недостающих пакетов для установки нет.")); return; }
             }
             else if (batch)
             {
@@ -851,7 +853,7 @@ public partial class MainWindow : Window
                 skipped = batchPlan.Skipped;
                 if (plan is null)
                 {
-                    StatusLabel.Text = UiText.Get("Подходящих пакетов нет. ") + string.Join("; ", skipped.Take(5));
+                    SetStatus(UiText.Get("Подходящих пакетов нет. ") + string.Join("; ", skipped.Take(5)), needsAttention: true);
                     return;
                 }
             }
@@ -865,7 +867,7 @@ public partial class MainWindow : Window
                 plan = BuildDependencyPlan(root, librariesOnly);
             }
             if (plan is null || !plan.IsReady) throw new InvalidDataException(UiText.Get("Не удалось определить обязательные зависимости: ") + string.Join("; ", plan?.Issues ?? Array.Empty<string>()));
-            if (plan.Packages.Count == 0) { StatusLabel.Text = UiText.Get("Все обязательные библиотеки уже установлены."); return; }
+            if (plan.Packages.Count == 0) { SetStatus(UiText.Get("Все обязательные библиотеки уже установлены.")); return; }
             Directory.CreateDirectory(directory);
             if (batch)
             {
@@ -878,23 +880,23 @@ public partial class MainWindow : Window
             // Нажатие установки, обновления или переустановки сразу запускает операцию.
             // Проверки архива, резервная копия и откат остаются внутри SafeInstaller.
             installCommitting = true;
-            StatusLabel.Text = UiText.Get("Проверяем и устанавливаем архивы. Дождитесь завершения…");
+            SetStatus(UiText.Get("Проверяем и устанавливаем архивы. Дождитесь завершения…"), needsAttention: true);
             var updatedCount = plan.Packages.Count(x => x.IsInstalled);
             var installedCount = plan.Packages.Count - updatedCount;
             EnsureStartupUpdateGameClosed();
             var result = await new SafeInstaller().InstallAsync(plan, archives, target, operation.Token);
             lastBackupDirectory = result.BackupDirectory;
             OpenBackupButton.Visibility = Visibility.Visible;
-            StatusLabel.Text = UiText.Format($"Готово · Установлено: {installedCount} · Обновлено: {updatedCount} · Пропущено: {skipped.Count}");
+            SetStatus(UiText.Format($"Готово · Установлено: {installedCount} · Обновлено: {updatedCount} · Пропущено: {skipped.Count}"), needsAttention: skipped.Count > 0);
             try
             {
-                installed = (await provider.ScanAsync(target)).Addons;
+                installed = (await ScanInstalledFolderAsync(target)).Addons;
                 ApplyComparisons();
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
             {
                 AppLog.Error("ui.operation.failed", ex);
-                StatusLabel.Text += UiText.Get(" · Установка завершена, но список не обновлён. Нажмите «Пересканировать».");
+                SetStatus(StatusLabel.Text + UiText.Get(" · Установка завершена, но список не обновлён. Нажмите «Пересканировать»."), needsAttention: true);
             }
         }
         catch (OperationCanceledException ex)
@@ -921,7 +923,7 @@ public partial class MainWindow : Window
         if (busy || sender is not Button { DataContext: Addon addon } || !addon.CanDownload || addon.PreviewId is not long id) return;
         AddonList.SelectedItem = addon;
         var plan = ZipDownloadPlan.Build(addon, catalog, installed);
-        if (plan is null || !plan.IsReady) { StatusLabel.Text = UiText.Get("Не удалось определить обязательные зависимости. Подробности — в сведениях об аддоне."); return; }
+        if (plan is null || !plan.IsReady) { SetStatus(UiText.Get("Не удалось определить обязательные зависимости. Подробности — в сведениях об аддоне."), needsAttention: true); return; }
         var dialog = new SaveFileDialog
         {
             Title = UiText.Get("Сохранить ZIP-архив аддона"),
@@ -955,7 +957,7 @@ public partial class MainWindow : Window
                 DownloadProgressChanged(value.Index, value.Count, value.Name, value.Bytes, value.Total);
             });
             var result = await new DependencyBatchDownloader(downloader).DownloadAsync(plan, directory, rootDestination, progress, operation.Token, catalog, installed);
-            StatusLabel.Text = UiText.Format($"Архивов сохранено: {result.Files.Count} · {result.LibraryDirectory ?? rootDestination} · Установка не выполнялась");
+            SetStatus(UiText.Format($"Архивов сохранено: {result.Files.Count} · {result.LibraryDirectory ?? rootDestination} · Установка не выполнялась"));
         }
         catch (Exception ex) when (ex is OperationCanceledException or System.Net.Http.HttpRequestException or IOException or UnauthorizedAccessException or InvalidDataException or System.Text.Json.JsonException or ArgumentException or NotSupportedException or System.Security.Cryptography.CryptographicException)
         {

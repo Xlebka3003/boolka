@@ -48,6 +48,11 @@ public static class DependencyResolver
             if (!owners.TryGetValue(name, out var candidates)) { issues.Add($"Не найден обязательный модуль {dependency}."); return; }
             var dedicated = candidates.Where(p => p.CatalogFolders.Count == 1 && p.PackageModules.Any(m => m.Path.Equals(name, StringComparison.OrdinalIgnoreCase) && m.IsLibrary)).ToList();
             var choices = dedicated.Count > 0 ? dedicated : candidates;
+            // Сначала исключаем проекты, не обеспечивающие минимальную сборку.
+            // Два владельца одного имени ещё не означают неоднозначность подходящей версии.
+            choices = choices.Where(package => package.PackageModules.Where(module => module.Path.Equals(name, StringComparison.OrdinalIgnoreCase)).ToArray()
+                is { Length: 1 } supplied && Satisfies(supplied[0].BuildVersion, minimum)).ToList();
+            if (choices.Count == 0) { issues.Add($"Каталог не подтверждает требуемую сборку {dependency}."); return; }
             if (choices.Count != 1) { issues.Add($"Неоднозначный проект для {name}: {choices.Count} кандидатов."); return; }
             var package = choices[0];
             var modules = package.PackageModules.Where(m => m.Path.Equals(name, StringComparison.OrdinalIgnoreCase)).ToList();
