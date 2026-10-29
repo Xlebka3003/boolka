@@ -2,7 +2,7 @@
 
 Менеджер аддонов The Elder Scrolls Online для Windows.
 
-## Скриншоты
+## GIF
 
 ![Интерфейс boolka](docs/screenshots/boolka-overview.gif)
 
