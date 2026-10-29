@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Windows;
 
 namespace Boolka;
@@ -49,6 +49,7 @@ public partial class MainWindow
         UiResources.Apply(language);
         UpdateCategoryOptions();
         ThemeManager.Apply(theme);
+        UpdateApplicationButton();
         CategoryIcons.ApplyMode(preferences.PreviewMode);
         UpdateViewButtons();
         ApplyCollectionScale();

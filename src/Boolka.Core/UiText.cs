@@ -32,6 +32,15 @@ public static class UiText
 
     public static readonly IReadOnlyDictionary<string, string> English = new Dictionary<string, string>(StringComparer.Ordinal)
     {
+        ["Доступна boolka {0}. Нажмите, чтобы скачать и обновить."] = "boolka {0} is available. Click to download and update.",
+        ["Проверка обновлений boolka выполняется автоматически."] = "boolka checks for updates automatically.",
+        ["Проверяем обновление boolka…"] = "Checking for a boolka update…",
+        ["Скачиваем boolka: {0:0.0} из {1:0.0} МБ"] = "Downloading boolka: {0:0.0} of {1:0.0} MB",
+        ["Проверяем файлы обновления. Приложение перезапустится автоматически."] = "Checking update files. The application will restart automatically.",
+        ["Обновление boolka отменено. Файлы приложения не изменены."] = "boolka update canceled. Application files have not changed.",
+        ["Не удалось обновить boolka: "] = "Could not update boolka: ",
+        ["Не удалось завершить обновление boolka. Файлы восстановления не удалены."] = "Could not complete the boolka update. Recovery files have been retained.",
+
         ["Отменить прерванное восстановление"] = "Roll back interrupted restore",
         ["Журнал сохранён. Проверьте его перед отправкой разработчику."] = "Report saved. Review it before sending it to the developer.",
         ["Выберите исполняемый файл для текущей системы."] = "Choose an executable for the current operating system.",

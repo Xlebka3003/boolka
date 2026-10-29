@@ -31,3 +31,11 @@
 !/THIRD-PARTY/
 /src/Boolka.Desktop/
 /tests/Avalonia.Smoke/
+
+# Установщик и инструкция Windows.
+!/INSTALLING.md
+!/UPDATING.md
+!/installer/
+!/scripts/
+/scripts/*
+!/scripts/Package-Windows.ps1

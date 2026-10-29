@@ -74,7 +74,12 @@ public partial class MainWindow : Window
         UpdateViewButtons();
         SizeChanged += UpdateInterfaceScale;
         Deactivated += (_, _) => ResetGalleryGesture();
-        if (initializeOnLoad) Loaded += InitializeFolder;
+        UpdateApplicationButton();
+        if (initializeOnLoad)
+        {
+            Loaded += InitializeFolder;
+            Loaded += (_, _) => _ = MonitorApplicationUpdatesAsync();
+        }
     }
 
     private async void InitializeFolder(object sender, RoutedEventArgs e)
@@ -567,6 +572,7 @@ public partial class MainWindow : Window
     {
         ResetGalleryGesture();
         lifetime.Cancel();
+        applicationReleases.Dispose();
         detailsOperation?.Cancel(); imageOperation?.Cancel();
         base.OnClosed(e);
     }
@@ -584,6 +590,7 @@ public partial class MainWindow : Window
     private void SetBusy(bool value, string? message = null)
     {
         busy = value;
+        UpdateApplicationButton();
         BackButton.IsEnabled = RetryDetailsButton.IsEnabled = !value;
         DetailInstallButton.IsEnabled = !value && (AddonList.SelectedItem as Addon)?.CanInstall == true;
         SearchBox.IsEnabled = !value;

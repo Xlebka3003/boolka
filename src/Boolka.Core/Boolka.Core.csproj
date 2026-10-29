@@ -3,7 +3,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <AssemblyName>Boolka.Core</AssemblyName>
     <RootNamespace>Boolka</RootNamespace>
-    <Version>0.41.6</Version>
+    <Version>0.41.9</Version>
     <Authors>Xlebka</Authors>
     <Copyright>Copyright (c) 2026 Xlebka</Copyright>
     <PackageLicenseExpression>PolyForm-Noncommercial-1.0.0</PackageLicenseExpression>

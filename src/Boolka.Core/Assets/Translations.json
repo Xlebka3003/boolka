@@ -1,5 +1,14 @@
 {
   "de": {
+    "boolka {0} is available. Click to download and update.": "boolka {0} ist verfügbar. Zum Herunterladen und Aktualisieren klicken.",
+    "boolka checks for updates automatically.": "boolka sucht automatisch nach Updates.",
+    "Checking for a boolka update…": "boolka-Update wird gesucht…",
+    "Downloading boolka: {0:0.0} of {1:0.0} MB": "boolka wird heruntergeladen: {0:0.0} von {1:0.0} MB",
+    "Checking update files. The application will restart automatically.": "Updatedateien werden geprüft. Die Anwendung startet automatisch neu.",
+    "boolka update canceled. Application files have not changed.": "boolka-Update abgebrochen. Die Anwendungsdateien wurden nicht geändert.",
+    "Could not update boolka: ": "boolka konnte nicht aktualisiert werden: ",
+    "Could not complete the boolka update. Recovery files have been retained.": "Das boolka-Update konnte nicht abgeschlossen werden. Wiederherstellungsdateien wurden aufbewahrt.",
+
     "Dependencies will be checked during installation": "Abhängigkeiten werden bei der Installation geprüft",
     "Appearance": "Darstellung",
     "Updates and launch": "Updates und Start",
@@ -497,6 +506,15 @@
     "Windows helpers cannot run directly on this system. Choose a compatible program manually.": "Windows-Hilfsprogramme laufen auf diesem System nicht direkt. Wähle ein kompatibles Programm manuell."
   },
   "fr": {
+    "boolka {0} is available. Click to download and update.": "boolka {0} est disponible. Cliquez pour télécharger et mettre à jour.",
+    "boolka checks for updates automatically.": "boolka recherche automatiquement les mises à jour.",
+    "Checking for a boolka update…": "Recherche d’une mise à jour de boolka…",
+    "Downloading boolka: {0:0.0} of {1:0.0} MB": "Téléchargement de boolka : {0:0.0} sur {1:0.0} Mo",
+    "Checking update files. The application will restart automatically.": "Vérification des fichiers. L’application redémarrera automatiquement.",
+    "boolka update canceled. Application files have not changed.": "Mise à jour de boolka annulée. Les fichiers de l’application n’ont pas été modifiés.",
+    "Could not update boolka: ": "Impossible de mettre à jour boolka : ",
+    "Could not complete the boolka update. Recovery files have been retained.": "Impossible de terminer la mise à jour de boolka. Les fichiers de restauration ont été conservés.",
+
     "Dependencies will be checked during installation": "Les dépendances seront vérifiées lors de l’installation",
     "Appearance": "Apparence",
     "Updates and launch": "Mises à jour et lancement",
@@ -994,6 +1012,15 @@
     "Windows helpers cannot run directly on this system. Choose a compatible program manually.": "Les outils Windows ne s’exécutent pas directement sur ce système. Choisissez manuellement un programme compatible."
   },
   "es": {
+    "boolka {0} is available. Click to download and update.": "boolka {0} está disponible. Haz clic para descargar y actualizar.",
+    "boolka checks for updates automatically.": "boolka busca actualizaciones automáticamente.",
+    "Checking for a boolka update…": "Buscando una actualización de boolka…",
+    "Downloading boolka: {0:0.0} of {1:0.0} MB": "Descargando boolka: {0:0.0} de {1:0.0} MB",
+    "Checking update files. The application will restart automatically.": "Comprobando los archivos. La aplicación se reiniciará automáticamente.",
+    "boolka update canceled. Application files have not changed.": "Actualización de boolka cancelada. No se han modificado los archivos de la aplicación.",
+    "Could not update boolka: ": "No se pudo actualizar boolka: ",
+    "Could not complete the boolka update. Recovery files have been retained.": "No se pudo completar la actualización de boolka. Se han conservado los archivos de recuperación.",
+
     "Dependencies will be checked during installation": "Las dependencias se comprobarán durante la instalación",
     "Appearance": "Apariencia",
     "Updates and launch": "Actualizaciones e inicio",
@@ -1491,6 +1518,15 @@
     "Windows helpers cannot run directly on this system. Choose a compatible program manually.": "Las herramientas de Windows no se ejecutan directamente en este sistema. Elige manualmente un programa compatible."
   },
   "pt-BR": {
+    "boolka {0} is available. Click to download and update.": "boolka {0} está disponível. Clique para baixar e atualizar.",
+    "boolka checks for updates automatically.": "boolka verifica atualizações automaticamente.",
+    "Checking for a boolka update…": "Verificando atualização do boolka…",
+    "Downloading boolka: {0:0.0} of {1:0.0} MB": "Baixando boolka: {0:0.0} de {1:0.0} MB",
+    "Checking update files. The application will restart automatically.": "Verificando os arquivos. O aplicativo será reiniciado automaticamente.",
+    "boolka update canceled. Application files have not changed.": "Atualização do boolka cancelada. Os arquivos do aplicativo não foram alterados.",
+    "Could not update boolka: ": "Não foi possível atualizar o boolka: ",
+    "Could not complete the boolka update. Recovery files have been retained.": "Não foi possível concluir a atualização do boolka. Os arquivos de recuperação foram mantidos.",
+
     "Dependencies will be checked during installation": "As dependências serão verificadas durante a instalação",
     "Appearance": "Aparência",
     "Updates and launch": "Atualizações e inicialização",
@@ -1988,6 +2024,15 @@
     "Windows helpers cannot run directly on this system. Choose a compatible program manually.": "Os auxiliares do Windows não executam diretamente neste sistema. Escolha um programa compatível manualmente."
   },
   "pl": {
+    "boolka {0} is available. Click to download and update.": "Dostępna jest boolka {0}. Kliknij, aby pobrać i zaktualizować.",
+    "boolka checks for updates automatically.": "boolka automatycznie sprawdza aktualizacje.",
+    "Checking for a boolka update…": "Sprawdzanie aktualizacji boolka…",
+    "Downloading boolka: {0:0.0} of {1:0.0} MB": "Pobieranie boolka: {0:0.0} z {1:0.0} MB",
+    "Checking update files. The application will restart automatically.": "Sprawdzanie plików. Aplikacja uruchomi się ponownie automatycznie.",
+    "boolka update canceled. Application files have not changed.": "Aktualizacja boolka anulowana. Pliki aplikacji nie zostały zmienione.",
+    "Could not update boolka: ": "Nie udało się zaktualizować boolka: ",
+    "Could not complete the boolka update. Recovery files have been retained.": "Nie udało się ukończyć aktualizacji boolka. Pliki odzyskiwania zostały zachowane.",
+
     "Dependencies will be checked during installation": "Zależności zostaną sprawdzone podczas instalacji",
     "Appearance": "Wygląd",
     "Updates and launch": "Aktualizacje i uruchamianie",
@@ -2485,6 +2530,15 @@
     "Windows helpers cannot run directly on this system. Choose a compatible program manually.": "Narzędzia Windows nie działają bezpośrednio w tym systemie. Wybierz zgodny program ręcznie."
   },
   "zh-CN": {
+    "boolka {0} is available. Click to download and update.": "boolka {0} 已可用。点击下载并更新。",
+    "boolka checks for updates automatically.": "boolka 会自动检查更新。",
+    "Checking for a boolka update…": "正在检查 boolka 更新…",
+    "Downloading boolka: {0:0.0} of {1:0.0} MB": "正在下载 boolka：{0:0.0} / {1:0.0} MB",
+    "Checking update files. The application will restart automatically.": "正在检查更新文件。应用将自动重启。",
+    "boolka update canceled. Application files have not changed.": "boolka 更新已取消。应用文件未更改。",
+    "Could not update boolka: ": "无法更新 boolka：",
+    "Could not complete the boolka update. Recovery files have been retained.": "无法完成 boolka 更新。恢复文件已保留。",
+
     "Dependencies will be checked during installation": "安装时将检查依赖项",
     "Appearance": "外观",
     "Updates and launch": "更新与启动",
@@ -2982,6 +3036,15 @@
     "Windows helpers cannot run directly on this system. Choose a compatible program manually.": "Windows 辅助程序无法在此系统直接运行。请手动选择兼容程序。"
   },
   "ja": {
+    "boolka {0} is available. Click to download and update.": "boolka {0} が利用できます。クリックしてダウンロード・更新します。",
+    "boolka checks for updates automatically.": "boolka は更新を自動的に確認します。",
+    "Checking for a boolka update…": "boolka の更新を確認中…",
+    "Downloading boolka: {0:0.0} of {1:0.0} MB": "boolka をダウンロード中: {0:0.0} / {1:0.0} MB",
+    "Checking update files. The application will restart automatically.": "更新ファイルを確認中です。アプリは自動的に再起動します。",
+    "boolka update canceled. Application files have not changed.": "boolka の更新をキャンセルしました。アプリのファイルは変更されていません。",
+    "Could not update boolka: ": "boolka を更新できませんでした: ",
+    "Could not complete the boolka update. Recovery files have been retained.": "boolka の更新を完了できませんでした。復元用ファイルは保持されています。",
+
     "Dependencies will be checked during installation": "依存関係はインストール時に確認されます",
     "Appearance": "外観",
     "Updates and launch": "更新と起動",
